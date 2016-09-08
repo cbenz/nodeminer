@@ -2,7 +2,7 @@
 
 A note-taking tool (written in [Elm](http://elm-lang.org/))
 
-Demo: TODO
+Demo: https://cbenz.github.io/nodeminer/
 
 ## Development
 
