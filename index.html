@@ -1,7 +1,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>NoteMinder</title>
+        <title>NoteMiner</title>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
         <meta content="IE=edge" http-equiv=X-UA-Compatible>
         <meta content="width=device-width,initial-scale=1" name=viewport>
@@ -14,11 +14,11 @@
     <body>
         <script src="/_compile/src/Main.elm"></script>
         <script type="text/javascript">
-            var storedState = localStorage.getItem('noteminder');
+            var storedState = localStorage.getItem('noteminer');
             var startingState = storedState ? JSON.parse(storedState) : null;
             var noteminer = Elm.Main.fullscreen(startingState);
             noteminer.ports.setStorage.subscribe(function(state) {
-                localStorage.setItem('noteminder', JSON.stringify(state));
+                localStorage.setItem('noteminer', JSON.stringify(state));
             });
         </script>
     </body>

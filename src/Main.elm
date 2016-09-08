@@ -122,7 +122,7 @@ sampleTree =
             ]
         , node "Projets"
             7
-            [ node "NoteMinder" 8 []
+            [ node "NoteMiner" 8 []
             ]
         ]
 
@@ -258,7 +258,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text "NoteMinder" ]
+        [ h1 [] [ text "NoteMiner" ]
         , viewTree model.tree model.currentNode
         , hr [] []
         , button

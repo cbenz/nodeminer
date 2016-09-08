@@ -9370,7 +9370,7 @@ var _user$project$Main$sampleTree = A3(
 				[
 					A3(
 					_user$project$Main$node,
-					'NoteMinder',
+					'NoteMiner',
 					8,
 					_elm_lang$core$Native_List.fromArray(
 						[]))
@@ -9539,7 +9539,7 @@ var _user$project$Main$view = function (model) {
 					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html$text('NoteMinder')
+						_elm_lang$html$Html$text('NoteMiner')
 					])),
 				A2(_user$project$Main$viewTree, model.tree, model.currentNode),
 				A2(

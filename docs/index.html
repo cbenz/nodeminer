@@ -1,7 +1,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>NoteMinder</title>
+        <title>NoteMiner</title>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
         <meta content="IE=edge" http-equiv=X-UA-Compatible>
         <meta content="width=device-width,initial-scale=1" name=viewport>
@@ -13,14 +13,14 @@
     </head>
     <body>
         <div id="Main"></div>
-        <p>Source code on <a href="https://github.com/cbenz/nodeminer">GitHub</a></p>
+        <p>Source code on <a href="https://github.com/cbenz/noteminer">GitHub</a></p>
         <script src="main.js"></script>
         <script type="text/javascript">
-            var storedState = localStorage.getItem('noteminder');
+            var storedState = localStorage.getItem('noteminer');
             var startingState = storedState ? JSON.parse(storedState) : null;
             var noteminer = Elm.Main.embed(document.getElementById("Main"), startingState);
             noteminer.ports.setStorage.subscribe(function(state) {
-                localStorage.setItem('noteminder', JSON.stringify(state));
+                localStorage.setItem('noteminer', JSON.stringify(state));
             });
         </script>
     </body>

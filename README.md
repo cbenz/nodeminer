@@ -1,8 +1,8 @@
-# NoteMinder
+# NoteMiner
 
 A note-taking tool (written in [Elm](http://elm-lang.org/))
 
-Demo: https://cbenz.github.io/nodeminer/
+Demo: https://cbenz.github.io/noteminer/
 
 ## Development
 
