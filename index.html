@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>NoteMinder</title>
+        <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+        <meta content="IE=edge" http-equiv=X-UA-Compatible>
+        <meta content="width=device-width,initial-scale=1" name=viewport>
+        <style>
+            :focus {
+                outline: none;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="/_compile/src/Main.elm"></script>
+        <script type="text/javascript">
+            var storedState = localStorage.getItem('noteminder');
+            var startingState = storedState ? JSON.parse(storedState) : null;
+            var noteminer = Elm.Main.fullscreen(startingState);
+            noteminer.ports.setStorage.subscribe(function(state) {
+                localStorage.setItem('noteminder', JSON.stringify(state));
+            });
+        </script>
+    </body>
+</html>
