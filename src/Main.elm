@@ -31,6 +31,11 @@ main =
 -- CONSTANTS
 
 
+enter : Keyboard.KeyCode
+enter =
+    13
+
+
 up : Keyboard.KeyCode
 up =
     38
@@ -45,8 +50,8 @@ down =
 -- HELPERS
 
 
-justOrCrash : Maybe a -> String -> a
-justOrCrash maybe msg =
+justOrCrash : String -> Maybe a -> a
+justOrCrash msg maybe =
     case maybe of
         Just value ->
             value
@@ -57,7 +62,7 @@ justOrCrash maybe msg =
 
 getNodeIdAttribute : Int -> String
 getNodeIdAttribute id =
-    ("node-" ++ (toString id))
+    "node-" ++ (toString id)
 
 
 
@@ -88,13 +93,64 @@ initialZipper tree =
 goToBeginning : Tree -> Zipper
 goToBeginning tree =
     justOrCrash
-        (MultiwayTreeZipper.goToChild 0 (initialZipper tree))
         "`goToChild 0` should never return Nothing"
+        (MultiwayTreeZipper.goToChild 0 (initialZipper tree))
 
 
 focusNode : Zipper -> Task Dom.Error ()
 focusNode node =
     Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum node).id)
+
+
+getTreeRootFromZipper : Zipper -> Tree
+getTreeRootFromZipper zipper =
+    fst
+        (justOrCrash
+            "goToRoot should never return Nothing"
+            (MultiwayTreeZipper.goToRoot zipper)
+        )
+
+
+findIndex : Tree -> Forest -> Int
+findIndex node nodes =
+    nodes
+        |> List.indexedMap
+            (\index child ->
+                if MultiwayTree.datum child == MultiwayTree.datum node then
+                    Just index
+                else
+                    Nothing
+            )
+        |> Maybe.oneOf
+        |> justOrCrash "find a child from a parent should never return Nothing"
+
+
+insertAtIndex : Tree -> Int -> Forest -> Forest
+insertAtIndex node index nodes =
+    let
+        startSlice =
+            List.take index nodes
+
+        endSlice =
+            List.drop index nodes
+    in
+        startSlice ++ node :: endSlice
+
+
+nextId : Tree -> Int
+nextId tree =
+    tree
+        |> MultiwayTree.flatten
+        |> List.map .id
+        |> List.maximum
+        |> (\index ->
+                case index of
+                    Just index ->
+                        index + 1
+
+                    Nothing ->
+                        0
+           )
 
 
 
@@ -228,6 +284,37 @@ update msg model =
                     ( { model | currentNode = currentNode' }
                     , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
                     )
+            else if keyCode == enter then
+                let
+                    parent =
+                        (justOrCrash
+                            "goUp should never return Nothing because root node is unreachable by the user"
+                            (MultiwayTreeZipper.goUp model.currentNode)
+                        )
+
+                    children =
+                        MultiwayTree.children (fst parent)
+
+                    index =
+                        findIndex (fst model.currentNode) children
+
+                    children' =
+                        insertAtIndex (node "" (nextId model.tree) []) (index + 1) children
+
+                    parent' =
+                        MultiwayTreeZipper.updateChildren children' parent
+
+                    currentNode' =
+                        justOrCrash
+                            "updateChildren should never return Nothing"
+                            (parent' `Maybe.andThen` MultiwayTreeZipper.goToChild (index + 1))
+
+                    tree' =
+                        getTreeRootFromZipper currentNode'
+                in
+                    ( { model | tree = tree', currentNode = currentNode' }
+                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    )
             else
                 ( model, Cmd.none )
 
@@ -235,15 +322,14 @@ update msg model =
             let
                 currentNode' =
                     justOrCrash
-                        (MultiwayTreeZipper.updateDatum (\datum -> { datum | text = text }) model.currentNode)
                         "`model.currentNode` always references an existing node"
+                        (MultiwayTreeZipper.updateDatum
+                            (\datum -> { datum | text = text })
+                            model.currentNode
+                        )
 
                 tree' =
-                    fst
-                        (justOrCrash
-                            (MultiwayTreeZipper.goToRoot currentNode')
-                            "goToRoot should never return Nothing"
-                        )
+                    getTreeRootFromZipper currentNode'
             in
                 ( { model | tree = tree', currentNode = currentNode' }, Cmd.none )
 
@@ -312,8 +398,8 @@ viewForest forest zipper currentNode =
                 let
                     zipper' =
                         justOrCrash
-                            (MultiwayTreeZipper.goToChild index zipper)
                             "Should never reach this case (List.indexedMap reaches only existing children)"
+                            (MultiwayTreeZipper.goToChild index zipper)
                 in
                     viewTreeNode node zipper' currentNode
             )
