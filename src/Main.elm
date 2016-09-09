@@ -1,5 +1,6 @@
 port module Main exposing (..)
 
+import Char
 import Debug
 import Dom
 import Html exposing (..)
@@ -43,6 +44,16 @@ tab =
 enter : KeyCode
 enter =
     13
+
+
+shift : KeyCode
+shift =
+    16
+
+
+ctrl : KeyCode
+ctrl =
+    17
 
 
 up : KeyCode
@@ -146,6 +157,18 @@ insertAtIndex node index nodes =
         startSlice ++ node :: endSlice
 
 
+removeAtIndex : Int -> Forest -> Forest
+removeAtIndex index nodes =
+    let
+        startSlice =
+            List.take index nodes
+
+        endSlice =
+            List.drop (index + 1) nodes
+    in
+        startSlice ++ endSlice
+
+
 nextId : Tree -> Int
 nextId tree =
     tree
@@ -162,13 +185,13 @@ nextId tree =
            )
 
 
-createNode : Tree -> Tree
-createNode tree =
+nextNode : Tree -> Tree
+nextNode tree =
     node "" (nextId tree) []
 
 
-insertSiblingAfter : Tree -> Zipper -> Tree -> Maybe Zipper
-insertSiblingAfter newTree zipper tree =
+insertSiblingAfter : Tree -> Zipper -> Maybe Zipper
+insertSiblingAfter newTree zipper =
     let
         parent =
             (justOrCrash
@@ -191,13 +214,61 @@ insertSiblingAfter newTree zipper tree =
         parent' `Maybe.andThen` MultiwayTreeZipper.goToChild index
 
 
+removeNode : Zipper -> Maybe Zipper
+removeNode zipper =
+    let
+        parent =
+            (justOrCrash
+                "goUp should never return Nothing because root node is unreachable by the user"
+                (MultiwayTreeZipper.goUp zipper)
+            )
 
--- SAMPLE DATA
+        children =
+            MultiwayTree.children (fst parent)
+
+        index =
+            findIndex (fst zipper) children
+
+        children' =
+            if
+                (MultiwayTree.datum
+                    (fst
+                        (justOrCrash
+                            "first child always exist"
+                            (MultiwayTreeZipper.goToRoot zipper `Maybe.andThen` MultiwayTreeZipper.goToChild 0)
+                        )
+                    )
+                    /= MultiwayTree.datum (fst zipper)
+                )
+                    || ((zipper |> getTreeRootFromZipper |> MultiwayTree.children |> List.length)
+                            > 1
+                       )
+            then
+                removeAtIndex index children
+            else
+                children
+
+        parent' =
+            MultiwayTreeZipper.updateChildren children' parent
+    in
+        parent'
+            `Maybe.andThen`
+                (if List.length children' == 0 then
+                    Just
+                 else if index == List.length children' then
+                    MultiwayTreeZipper.goToRightMostChild
+                 else
+                    MultiwayTreeZipper.goToChild index
+                )
 
 
 node : String -> Int -> Forest -> Tree
 node text id children =
     MultiwayTree.Tree { text = text, id = id } children
+
+
+
+-- SAMPLE DATA
 
 
 sampleTree : Tree
@@ -228,6 +299,8 @@ sampleTree =
 type alias Model =
     { tree : Tree
     , currentNode : Zipper
+    , isCtrlPressed : Bool
+    , isShiftPressed : Bool
     }
 
 
@@ -257,6 +330,8 @@ init serializedTree =
     in
         ( { tree = tree
           , currentNode = currentNode
+          , isCtrlPressed = False
+          , isShiftPressed = False
           }
         , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode)
         )
@@ -268,7 +343,10 @@ init serializedTree =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Keyboard.downs KeyDown
+    Sub.batch
+        [ Keyboard.downs KeyDown
+        , Keyboard.ups KeyUp
+        ]
 
 
 
@@ -279,6 +357,7 @@ type Msg
     = NoOp
     | SetCurrentNode Zipper
     | KeyDown KeyCode
+    | KeyUp KeyCode
     | UpdateNodeText String
     | ResetToSampleTree
 
@@ -293,7 +372,11 @@ update msg model =
             ( { model | currentNode = zipper }, Cmd.none )
 
         KeyDown keyCode ->
-            if keyCode == up then
+            if keyCode == ctrl then
+                ( { model | isCtrlPressed = True }, Cmd.none )
+            else if keyCode == shift then
+                ( { model | isShiftPressed = True }, Cmd.none )
+            else if keyCode == up then
                 let
                     currentNode' =
                         if model.currentNode == goToBeginning model.tree then
@@ -325,13 +408,13 @@ update msg model =
             else if keyCode == enter then
                 let
                     newNode =
-                        createNode model.tree
+                        nextNode model.tree
 
                     currentNode' =
                         justOrCrash
                             "insertion should never fail"
                             (if List.isEmpty (MultiwayTree.children (fst model.currentNode)) then
-                                insertSiblingAfter newNode model.currentNode model.tree
+                                insertSiblingAfter newNode model.currentNode
                                     `Maybe.andThen` MultiwayTreeZipper.goToNext
                              else
                                 MultiwayTreeZipper.insertChild newNode model.currentNode
@@ -344,8 +427,87 @@ update msg model =
                     ( { model | tree = tree', currentNode = currentNode' }
                     , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
                     )
-                -- else if keyCode == tab then
-                --     ( model, Cmd.none )
+            else if keyCode == tab then
+                let
+                    parent =
+                        (justOrCrash
+                            "goUp should never return Nothing because root node is unreachable by the user"
+                            (MultiwayTreeZipper.goUp model.currentNode)
+                        )
+
+                    index =
+                        findIndex
+                            (fst model.currentNode)
+                            (MultiwayTree.children (fst parent))
+                in
+                    -- if model.isShiftPressed then
+                    --     let
+                    --         currentNode' =
+                    --             justOrCrash
+                    --                 "insertSiblingAfter should never fail"
+                    --                 (insertSiblingAfter
+                    --                     (fst model.currentNode)
+                    --                     (justOrCrash
+                    --                         "remove selected node should never fail"
+                    --                         (removeNode model.currentNode `Maybe.andThen` MultiwayTreeZipper.goUp)
+                    --                     )
+                    --                 )
+                    --         tree' =
+                    --             getTreeRootFromZipper currentNode'
+                    --     in
+                    --         ( { model | tree = tree', currentNode = currentNode' }
+                    --         , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    --         )
+                    -- else
+                    (if index == 0 then
+                        -- To be indented the node must have at least a previous sibling.
+                        ( model, Cmd.none )
+                     else
+                        let
+                            currentNode' =
+                                justOrCrash
+                                    "appendChild should never fail"
+                                    (MultiwayTreeZipper.appendChild
+                                        (fst model.currentNode)
+                                        (justOrCrash
+                                            "remove selected node should never fail"
+                                            (removeNode model.currentNode)
+                                        )
+                                        `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
+                                    )
+
+                            tree' =
+                                getTreeRootFromZipper currentNode'
+                        in
+                            ( { model | tree = tree', currentNode = currentNode' }
+                            , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                            )
+                    )
+            else if Char.fromCode keyCode == 'K' then
+                let
+                    currentNode' =
+                        justOrCrash
+                            "remove selected node should never fail"
+                            (removeNode model.currentNode)
+
+                    tree' =
+                        getTreeRootFromZipper currentNode'
+                in
+                    ( { model | tree = tree', currentNode = currentNode' }
+                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    )
+            else
+                -- let
+                --     _ =
+                --         Debug.log "unknown keyCode" keyCode
+                -- in
+                ( model, Cmd.none )
+
+        KeyUp keyCode ->
+            if keyCode == ctrl then
+                ( { model | isCtrlPressed = False }, Cmd.none )
+            else if keyCode == shift then
+                ( { model | isShiftPressed = False }, Cmd.none )
             else
                 ( model, Cmd.none )
 
@@ -378,10 +540,31 @@ view model =
         [ h1 [] [ text "NoteMiner" ]
         , viewTree model.tree model.currentNode
         , hr [] []
+        , p []
+            [ text "Keyboard shortcuts"
+            , ul []
+                [ li [] [ text "Up - select previous node" ]
+                , li [] [ text "Down - select next node" ]
+                , li [] [ text "Enter - insert a node below" ]
+                ]
+            ]
         , button
             [ onClick ResetToSampleTree
             ]
             [ text "Reset to sample tree" ]
+        , viewModel model
+        ]
+
+
+viewModel : Model -> Html Msg
+viewModel model =
+    pre []
+        [ text
+            (toString
+                { isCtrlPressed = model.isCtrlPressed
+                , isShiftPressed = model.isShiftPressed
+                }
+            )
         ]
 
 
@@ -422,7 +605,7 @@ viewTreeNode node zipper currentNode =
                     [ id (getNodeIdAttribute datum.id)
                     , value datum.text
                     , onInput UpdateNodeText
-                    , preventDefaultForKeyCodes [ enter, up, down ]
+                    , preventDefaultForKeyCodes [ enter, up, down, tab ]
                     , style
                         [ ( "border", "none" )
                         , ( "width", "100%" )
