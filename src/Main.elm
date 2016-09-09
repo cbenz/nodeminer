@@ -5,7 +5,7 @@ import Dom
 import Html exposing (..)
 import Html.App as App
 import Html.Attributes exposing (id, style, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
 import Task exposing (Task)
@@ -31,17 +31,26 @@ main =
 -- CONSTANTS
 
 
-enter : Keyboard.KeyCode
+type alias KeyCode =
+    Int
+
+
+tab : KeyCode
+tab =
+    9
+
+
+enter : KeyCode
 enter =
     13
 
 
-up : Keyboard.KeyCode
+up : KeyCode
 up =
     38
 
 
-down : Keyboard.KeyCode
+down : KeyCode
 down =
     40
 
@@ -240,7 +249,7 @@ subscriptions model =
 type Msg
     = NoOp
     | SetCurrentNode Zipper
-    | KeyDown Keyboard.KeyCode
+    | KeyDown KeyCode
     | UpdateNodeText String
     | ResetToSampleTree
 
@@ -315,6 +324,8 @@ update msg model =
                     ( { model | tree = tree', currentNode = currentNode' }
                     , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
                     )
+                -- else if keyCode == tab then
+                --     ( model, Cmd.none )
             else
                 ( model, Cmd.none )
 
@@ -365,6 +376,24 @@ viewTreeNode node zipper currentNode =
         datum =
             MultiwayTree.datum node
 
+        preventDefaultForKeyCodes : List KeyCode -> Attribute Msg
+        preventDefaultForKeyCodes keyCodes =
+            let
+                eventOptions =
+                    { stopPropagation = False, preventDefault = True }
+
+                filterKey keyCode =
+                    if List.any ((==) keyCode) keyCodes then
+                        Ok keyCode
+                    else
+                        Err "ignored input"
+
+                decoder =
+                    Decode.customDecoder Html.Events.keyCode filterKey
+                        |> Decode.map (always NoOp)
+            in
+                onWithOptions "keydown" eventOptions decoder
+
         liHtml =
             li
                 [ onClick (SetCurrentNode zipper)
@@ -373,6 +402,7 @@ viewTreeNode node zipper currentNode =
                     [ id (getNodeIdAttribute datum.id)
                     , value datum.text
                     , onInput UpdateNodeText
+                    , preventDefaultForKeyCodes [ enter, up, down ]
                     , style
                         [ ( "border", "none" )
                         , ( "width", "100%" )
