@@ -162,6 +162,35 @@ nextId tree =
            )
 
 
+createNode : Tree -> Tree
+createNode tree =
+    node "" (nextId tree) []
+
+
+insertSiblingAfter : Tree -> Zipper -> Tree -> Maybe Zipper
+insertSiblingAfter newTree zipper tree =
+    let
+        parent =
+            (justOrCrash
+                "goUp should never return Nothing because root node is unreachable by the user"
+                (MultiwayTreeZipper.goUp zipper)
+            )
+
+        children =
+            MultiwayTree.children (fst parent)
+
+        index =
+            findIndex (fst zipper) children
+
+        children' =
+            insertAtIndex newTree (index + 1) children
+
+        parent' =
+            MultiwayTreeZipper.updateChildren children' parent
+    in
+        parent' `Maybe.andThen` MultiwayTreeZipper.goToChild index
+
+
 
 -- SAMPLE DATA
 
@@ -295,28 +324,19 @@ update msg model =
                     )
             else if keyCode == enter then
                 let
-                    parent =
-                        (justOrCrash
-                            "goUp should never return Nothing because root node is unreachable by the user"
-                            (MultiwayTreeZipper.goUp model.currentNode)
-                        )
-
-                    children =
-                        MultiwayTree.children (fst parent)
-
-                    index =
-                        findIndex (fst model.currentNode) children
-
-                    children' =
-                        insertAtIndex (node "" (nextId model.tree) []) (index + 1) children
-
-                    parent' =
-                        MultiwayTreeZipper.updateChildren children' parent
+                    newNode =
+                        createNode model.tree
 
                     currentNode' =
                         justOrCrash
-                            "updateChildren should never return Nothing"
-                            (parent' `Maybe.andThen` MultiwayTreeZipper.goToChild (index + 1))
+                            "insertion should never fail"
+                            (if List.isEmpty (MultiwayTree.children (fst model.currentNode)) then
+                                insertSiblingAfter newNode model.currentNode model.tree
+                                    `Maybe.andThen` MultiwayTreeZipper.goToNext
+                             else
+                                MultiwayTreeZipper.insertChild newNode model.currentNode
+                                    `Maybe.andThen` MultiwayTreeZipper.goToChild 0
+                            )
 
                     tree' =
                         getTreeRootFromZipper currentNode'
