@@ -67,7 +67,40 @@ down =
 
 
 
--- HELPERS
+-- LIST HELPERS
+
+
+{-| Inserts a value in a list so that the value has the given index in the new list.
+
+    insertAtIndex 9 1 [0,1,2]
+        [0,9,1,2]
+-}
+insertAtIndex : a -> Int -> List a -> List a
+insertAtIndex x index xs =
+    let
+        startSlice =
+            List.take index xs
+
+        endSlice =
+            List.drop index xs
+    in
+        startSlice ++ x :: endSlice
+
+
+removeAtIndex : Int -> List a -> List a
+removeAtIndex index xs =
+    let
+        startSlice =
+            List.take index xs
+
+        endSlice =
+            List.drop (index + 1) xs
+    in
+        startSlice ++ endSlice
+
+
+
+-- MAYBE HELPERS
 
 
 justOrCrash : String -> Maybe a -> a
@@ -77,12 +110,28 @@ justOrCrash msg maybe =
             value
 
         Nothing ->
-            Debug.crash msg
+            Debug.crash (msg ++ ": a value should never have been `Nothing`.")
+
+
+
+-- HTML HELPERS
 
 
 getNodeIdAttribute : Int -> String
 getNodeIdAttribute id =
     "node-" ++ (toString id)
+
+
+
+-- TASK HELPERS
+
+
+focusDomNode : Zipper -> Cmd Msg
+focusDomNode node =
+    Task.perform
+        (\_ -> NoOp)
+        (\_ -> NoOp)
+        (Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum node).id))
 
 
 
@@ -105,68 +154,9 @@ type alias Zipper =
     MultiwayTreeZipper.Zipper Datum
 
 
-initialZipper : Tree -> Zipper
-initialZipper tree =
-    ( tree, [] )
-
-
-goToBeginning : Tree -> Zipper
-goToBeginning tree =
-    justOrCrash
-        "`goToChild 0` should never return Nothing"
-        (MultiwayTreeZipper.goToChild 0 (initialZipper tree))
-
-
-focusNode : Zipper -> Task Dom.Error ()
-focusNode node =
-    Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum node).id)
-
-
-getTreeRootFromZipper : Zipper -> Tree
-getTreeRootFromZipper zipper =
-    fst
-        (justOrCrash
-            "goToRoot should never return Nothing"
-            (MultiwayTreeZipper.goToRoot zipper)
-        )
-
-
-findIndex : Tree -> Forest -> Int
-findIndex node nodes =
-    nodes
-        |> List.indexedMap
-            (\index child ->
-                if MultiwayTree.datum child == MultiwayTree.datum node then
-                    Just index
-                else
-                    Nothing
-            )
-        |> Maybe.oneOf
-        |> justOrCrash "find a child from a parent should never return Nothing"
-
-
-insertAtIndex : Tree -> Int -> Forest -> Forest
-insertAtIndex node index nodes =
-    let
-        startSlice =
-            List.take index nodes
-
-        endSlice =
-            List.drop index nodes
-    in
-        startSlice ++ node :: endSlice
-
-
-removeAtIndex : Int -> Forest -> Forest
-removeAtIndex index nodes =
-    let
-        startSlice =
-            List.take index nodes
-
-        endSlice =
-            List.drop (index + 1) nodes
-    in
-        startSlice ++ endSlice
+node : String -> Int -> Forest -> Tree
+node text id children =
+    MultiwayTree.Tree { text = text, id = id } children
 
 
 nextId : Tree -> Int
@@ -185,86 +175,195 @@ nextId tree =
            )
 
 
-nextNode : Tree -> Tree
-nextNode tree =
-    node "" (nextId tree) []
+nextNode : Zipper -> Tree
+nextNode zipper =
+    let
+        tree =
+            getTreeRootFromZipper zipper
+    in
+        node "" (nextId tree) []
 
 
-insertSiblingAfter : Tree -> Zipper -> Maybe Zipper
-insertSiblingAfter newTree zipper =
+hasSameDatumThan : MultiwayTree.Tree a -> MultiwayTree.Tree a -> Bool
+hasSameDatumThan a b =
+    MultiwayTree.datum a == MultiwayTree.datum b
+
+
+initialZipper : MultiwayTree.Tree a -> MultiwayTreeZipper.Zipper a
+initialZipper tree =
+    ( tree, [] )
+
+
+isFirstVisibleNode : MultiwayTreeZipper.Zipper a -> Bool
+isFirstVisibleNode zipper =
+    let
+        firstVisibleNode =
+            MultiwayTreeZipper.goToRoot zipper
+                `Maybe.andThen` (MultiwayTreeZipper.goToChild 0)
+                |> justOrCrash "isFirstVisibleNode"
+    in
+        zipper == firstVisibleNode
+
+
+isFirstLevelNode : MultiwayTreeZipper.Zipper a -> Bool
+isFirstLevelNode zipper =
+    Maybe.map2 (\parent root -> (fst parent) `hasSameDatumThan` (fst root))
+        (MultiwayTreeZipper.goUp zipper)
+        (MultiwayTreeZipper.goToRoot zipper)
+        |> justOrCrash "isFirstLevelNode"
+
+
+hasChildren : MultiwayTreeZipper.Zipper a -> Bool
+hasChildren zipper =
+    zipper |> fst |> MultiwayTree.children |> not << List.isEmpty
+
+
+getTreeRootFromZipper : MultiwayTreeZipper.Zipper a -> MultiwayTree.Tree a
+getTreeRootFromZipper zipper =
+    MultiwayTreeZipper.goToRoot zipper
+        |> justOrCrash "getTreeRootFromZipper"
+        |> fst
+
+
+getSiblings : MultiwayTreeZipper.Zipper a -> MultiwayTree.Forest a
+getSiblings zipper =
     let
         parent =
-            (justOrCrash
-                "goUp should never return Nothing because root node is unreachable by the user"
-                (MultiwayTreeZipper.goUp zipper)
-            )
-
-        children =
-            MultiwayTree.children (fst parent)
-
-        index =
-            findIndex (fst zipper) children
-
-        children' =
-            insertAtIndex newTree (index + 1) children
-
-        parent' =
-            MultiwayTreeZipper.updateChildren children' parent
+            MultiwayTreeZipper.goUp zipper
+                |> justOrCrash "getSiblings"
     in
-        parent' `Maybe.andThen` MultiwayTreeZipper.goToChild index
+        MultiwayTree.children (fst parent)
 
 
-removeNode : Zipper -> Maybe Zipper
-removeNode zipper =
+findIndexInForest : MultiwayTreeZipper.Zipper a -> MultiwayTree.Forest a -> Int
+findIndexInForest zipper forest =
     let
-        parent =
-            (justOrCrash
-                "goUp should never return Nothing because root node is unreachable by the user"
-                (MultiwayTreeZipper.goUp zipper)
-            )
+        node =
+            fst zipper
+    in
+        forest
+            |> List.indexedMap
+                (\index sibling ->
+                    if sibling `hasSameDatumThan` node then
+                        Just index
+                    else
+                        Nothing
+                )
+            |> Maybe.oneOf
+            |> justOrCrash "findIndexInForest"
 
-        children =
-            MultiwayTree.children (fst parent)
+
+findIndexInSiblings : MultiwayTreeZipper.Zipper a -> Int
+findIndexInSiblings zipper =
+    let
+        siblings =
+            getSiblings zipper
+    in
+        findIndexInForest zipper siblings
+
+
+isLastSibling : MultiwayTreeZipper.Zipper a -> Bool
+isLastSibling zipper =
+    let
+        nbSiblings =
+            getSiblings zipper |> List.length
 
         index =
-            findIndex (fst zipper) children
+            findIndexInSiblings zipper
+    in
+        index == nbSiblings - 1
+
+
+{-| Inserts a `Tree` as the next sibling of the current focus. Does not move the focus.
+-}
+insertSiblingBelow : MultiwayTree.Tree a -> MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+insertSiblingBelow newTree zipper =
+    let
+        index =
+            findIndexInSiblings zipper
+    in
+        insertSiblingAtIndex newTree (index + 1) zipper
+
+
+{-| Inserts a `Tree` as the child of `index` of the `Tree` of the current focus. Does not move the focus.
+-}
+insertChildAtIndex : MultiwayTree.Tree a -> Int -> MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+insertChildAtIndex newTree index zipper =
+    let
+        children =
+            MultiwayTree.children (fst zipper)
 
         children' =
-            if
-                (MultiwayTree.datum
-                    (fst
-                        (justOrCrash
-                            "first child always exist"
-                            (MultiwayTreeZipper.goToRoot zipper `Maybe.andThen` MultiwayTreeZipper.goToChild 0)
-                        )
-                    )
-                    /= MultiwayTree.datum (fst zipper)
-                )
-                    || ((zipper |> getTreeRootFromZipper |> MultiwayTree.children |> List.length)
-                            > 1
-                       )
-            then
-                removeAtIndex index children
-            else
-                children
-
-        parent' =
-            MultiwayTreeZipper.updateChildren children' parent
+            insertAtIndex newTree index children
     in
-        parent'
-            `Maybe.andThen`
-                (if List.length children' == 0 then
-                    Just
-                 else if index == List.length children' then
-                    MultiwayTreeZipper.goToRightMostChild
-                 else
-                    MultiwayTreeZipper.goToChild index
-                )
+        MultiwayTreeZipper.updateChildren children' zipper
 
 
-node : String -> Int -> Forest -> Tree
-node text id children =
-    MultiwayTree.Tree { text = text, id = id } children
+{-| Inserts a `Tree` as the sibling of `index` of the `Tree` of the current focus. Does not move the focus.
+-}
+insertSiblingAtIndex : MultiwayTree.Tree a -> Int -> MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+insertSiblingAtIndex newTree index zipper =
+    MultiwayTreeZipper.goUp zipper
+        `Maybe.andThen` insertChildAtIndex newTree index
+        `Maybe.andThen`
+            -- Restore focus moved by `goUp` to its original position.
+            MultiwayTreeZipper.goToChild (index - 1)
+
+
+{-| Removes the `Tree` at the current focus. Moves the focus to the parent.
+-}
+removeCurrentAndGoUp : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+removeCurrentAndGoUp zipper =
+    let
+        index =
+            findIndexInSiblings zipper
+
+        siblings =
+            getSiblings zipper
+
+        children' =
+            removeAtIndex index siblings
+    in
+        MultiwayTreeZipper.goUp zipper
+            `Maybe.andThen` MultiwayTreeZipper.updateChildren children'
+
+
+goToCorrectChildAfterRemoval :
+    MultiwayTreeZipper.Zipper a
+    -> MultiwayTreeZipper.Zipper a
+    -> Maybe (MultiwayTreeZipper.Zipper a)
+goToCorrectChildAfterRemoval zipper parent =
+    if hasChildren parent then
+        if isLastSibling zipper then
+            MultiwayTreeZipper.goToRightMostChild parent
+        else
+            let
+                index =
+                    findIndexInSiblings zipper
+            in
+                MultiwayTreeZipper.goToChild index parent
+    else
+        Just parent
+
+
+goToNextSibling : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+goToNextSibling zipper =
+    let
+        index =
+            findIndexInSiblings zipper
+    in
+        MultiwayTreeZipper.goUp zipper
+            `Maybe.andThen` MultiwayTreeZipper.goToChild (index + 1)
+
+
+
+-- MultiwayTreeZipper.goToChild index parent
+
+
+removeCurrent : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
+removeCurrent zipper =
+    removeCurrentAndGoUp zipper
+        `Maybe.andThen` goToCorrectChildAfterRemoval zipper
 
 
 
@@ -297,8 +396,7 @@ sampleTree =
 
 
 type alias Model =
-    { tree : Tree
-    , currentNode : Zipper
+    { currentNode : Zipper
     , isCtrlPressed : Bool
     , isShiftPressed : Bool
     }
@@ -319,21 +417,31 @@ init serializedTree =
                             tree
 
                         Err msg ->
-                            Debug.log ("Error loading tree in localStorage: " ++ msg) sampleTree
+                            Debug.log
+                                ("Error loading tree in localStorage: " ++ msg ++ ", fallback to sample tree")
+                                sampleTree
                     )
 
                 Nothing ->
-                    sampleTree
+                    Debug.log
+                        "No tree found in localStorage, fallback to sample tree"
+                        sampleTree
 
         currentNode =
-            goToBeginning tree
+            case MultiwayTreeZipper.goToChild 0 (initialZipper tree) of
+                Just currentNode ->
+                    currentNode
+
+                Nothing ->
+                    Debug.log
+                        "Error with `goToChild 0` on loaded tree from localStorage, fallback to sample tree"
+                        (initialZipper sampleTree)
     in
-        ( { tree = tree
-          , currentNode = currentNode
+        ( { currentNode = currentNode
           , isCtrlPressed = False
           , isShiftPressed = False
           }
-        , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode)
+        , focusDomNode currentNode
         )
 
 
@@ -379,123 +487,91 @@ update msg model =
             else if keyCode == up then
                 let
                     currentNode' =
-                        if model.currentNode == goToBeginning model.tree then
+                        if isFirstVisibleNode model.currentNode then
                             model.currentNode
                         else
-                            case MultiwayTreeZipper.goToPrevious model.currentNode of
-                                Just zipper ->
-                                    zipper
-
-                                Nothing ->
-                                    model.currentNode
+                            MultiwayTreeZipper.goToPrevious model.currentNode
+                                |> justOrCrash "update: keyCode == up"
                 in
                     ( { model | currentNode = currentNode' }
-                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    , focusDomNode currentNode'
                     )
             else if keyCode == down then
                 let
                     currentNode' =
-                        case MultiwayTreeZipper.goToNext model.currentNode of
-                            Just zipper ->
-                                zipper
-
-                            Nothing ->
-                                model.currentNode
+                        MultiwayTreeZipper.goToNext model.currentNode
+                            |> Maybe.withDefault model.currentNode
                 in
                     ( { model | currentNode = currentNode' }
-                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    , focusDomNode currentNode'
                     )
             else if keyCode == enter then
                 let
                     newNode =
-                        nextNode model.tree
+                        nextNode model.currentNode
 
                     currentNode' =
-                        justOrCrash
-                            "insertion should never fail"
-                            (if List.isEmpty (MultiwayTree.children (fst model.currentNode)) then
-                                insertSiblingAfter newNode model.currentNode
-                                    `Maybe.andThen` MultiwayTreeZipper.goToNext
-                             else
-                                MultiwayTreeZipper.insertChild newNode model.currentNode
-                                    `Maybe.andThen` MultiwayTreeZipper.goToChild 0
-                            )
-
-                    tree' =
-                        getTreeRootFromZipper currentNode'
+                        if hasChildren model.currentNode then
+                            MultiwayTreeZipper.insertChild newNode model.currentNode
+                                `Maybe.andThen` MultiwayTreeZipper.goToChild 0
+                                |> justOrCrash "update: keyCode == enter; goToChild 0"
+                        else
+                            insertSiblingBelow newNode model.currentNode
+                                `Maybe.andThen` MultiwayTreeZipper.goToNext
+                                |> justOrCrash "update: keyCode == enter; goToNext"
                 in
-                    ( { model | tree = tree', currentNode = currentNode' }
-                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                    ( { model | currentNode = currentNode' }
+                    , focusDomNode currentNode'
                     )
             else if keyCode == tab then
-                let
-                    parent =
-                        (justOrCrash
-                            "goUp should never return Nothing because root node is unreachable by the user"
-                            (MultiwayTreeZipper.goUp model.currentNode)
-                        )
-
-                    index =
-                        findIndex
-                            (fst model.currentNode)
-                            (MultiwayTree.children (fst parent))
-                in
-                    -- if model.isShiftPressed then
-                    --     let
-                    --         currentNode' =
-                    --             justOrCrash
-                    --                 "insertSiblingAfter should never fail"
-                    --                 (insertSiblingAfter
-                    --                     (fst model.currentNode)
-                    --                     (justOrCrash
-                    --                         "remove selected node should never fail"
-                    --                         (removeNode model.currentNode `Maybe.andThen` MultiwayTreeZipper.goUp)
-                    --                     )
-                    --                 )
-                    --         tree' =
-                    --             getTreeRootFromZipper currentNode'
-                    --     in
-                    --         ( { model | tree = tree', currentNode = currentNode' }
-                    --         , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
-                    --         )
-                    -- else
-                    (if index == 0 then
-                        -- To be indented the node must have at least a previous sibling.
+                if model.isShiftPressed then
+                    if isFirstLevelNode model.currentNode then
+                        -- To be dedented the node must have a depth > 1.
                         ( model, Cmd.none )
-                     else
+                    else
                         let
                             currentNode' =
-                                justOrCrash
-                                    "appendChild should never fail"
-                                    (MultiwayTreeZipper.appendChild
-                                        (fst model.currentNode)
-                                        (justOrCrash
-                                            "remove selected node should never fail"
-                                            (removeNode model.currentNode)
-                                        )
-                                        `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
-                                    )
-
-                            tree' =
-                                getTreeRootFromZipper currentNode'
+                                removeCurrentAndGoUp model.currentNode
+                                    `Maybe.andThen` insertSiblingBelow (fst model.currentNode)
+                                    `Maybe.andThen` goToNextSibling
+                                    |> justOrCrash "update: keyCode == tab; model.isShiftPressed"
                         in
-                            ( { model | tree = tree', currentNode = currentNode' }
-                            , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
+                            ( { model | currentNode = currentNode' }
+                            , focusDomNode currentNode'
                             )
-                    )
+                else
+                    let
+                        index =
+                            findIndexInSiblings model.currentNode
+                    in
+                        if index > 0 then
+                            let
+                                currentNode' =
+                                    removeCurrentAndGoUp model.currentNode
+                                        `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
+                                        `Maybe.andThen` MultiwayTreeZipper.appendChild (fst model.currentNode)
+                                        `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
+                                        |> justOrCrash "update: keyCode == tab; not model.isShiftPressed; index > 0"
+                            in
+                                ( { model | currentNode = currentNode' }
+                                , focusDomNode currentNode'
+                                )
+                        else
+                            -- To be indented the node must have at least a previous sibling.
+                            ( model, Cmd.none )
             else if Char.fromCode keyCode == 'K' then
-                let
-                    currentNode' =
-                        justOrCrash
-                            "remove selected node should never fail"
-                            (removeNode model.currentNode)
-
-                    tree' =
-                        getTreeRootFromZipper currentNode'
-                in
-                    ( { model | tree = tree', currentNode = currentNode' }
-                    , Task.perform (\_ -> NoOp) (\_ -> NoOp) (focusNode currentNode')
-                    )
+                if isFirstVisibleNode model.currentNode && List.length (getSiblings model.currentNode) == 1 then
+                    -- Cannot remove latest first-level node.
+                    ( model, Cmd.none )
+                else
+                    let
+                        currentNode' =
+                            removeCurrent model.currentNode
+                                |> justOrCrash "update: keyCode == K"
+                    in
+                        ( { model | currentNode = currentNode' }
+                        , focusDomNode currentNode'
+                        )
             else
                 -- let
                 --     _ =
@@ -514,20 +590,24 @@ update msg model =
         UpdateNodeText text ->
             let
                 currentNode' =
-                    justOrCrash
-                        "`model.currentNode` always references an existing node"
-                        (MultiwayTreeZipper.updateDatum
-                            (\datum -> { datum | text = text })
-                            model.currentNode
-                        )
-
-                tree' =
-                    getTreeRootFromZipper currentNode'
+                    MultiwayTreeZipper.updateDatum
+                        (\datum -> { datum | text = text })
+                        model.currentNode
+                        |> justOrCrash "update: UpdateNodeText"
             in
-                ( { model | tree = tree', currentNode = currentNode' }, Cmd.none )
+                ( { model | currentNode = currentNode' }
+                , Cmd.none
+                )
 
         ResetToSampleTree ->
-            ( { model | tree = sampleTree, currentNode = goToBeginning sampleTree }, Cmd.none )
+            let
+                currentNode =
+                    MultiwayTreeZipper.goToChild 0 (initialZipper sampleTree)
+                        |> justOrCrash "update: ResetToSampleTree"
+            in
+                ( { model | currentNode = currentNode }
+                , Cmd.none
+                )
 
 
 
@@ -538,7 +618,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "NoteMiner" ]
-        , viewTree model.tree model.currentNode
+        , viewTree model.currentNode
         , hr [] []
         , p []
             [ text "Keyboard shortcuts"
@@ -546,31 +626,33 @@ view model =
                 [ li [] [ text "Up - select previous node" ]
                 , li [] [ text "Down - select next node" ]
                 , li [] [ text "Enter - insert a node below" ]
+                , li [] [ text "Tab - indent a node" ]
+                , li [] [ text "Shift-Tab - dedent a node" ]
+                , li [] [ text "Ctrl-Shift-K - remove the current node" ]
                 ]
             ]
         , button
             [ onClick ResetToSampleTree
             ]
             [ text "Reset to sample tree" ]
-        , viewModel model
+        , p []
+            [ "The tree is stored and synchronized in localStorage. "
+                ++ "Look at the JavaScript console for error messages."
+                |> text
+            ]
         ]
 
 
-viewModel : Model -> Html Msg
-viewModel model =
-    pre []
-        [ text
-            (toString
-                { isCtrlPressed = model.isCtrlPressed
-                , isShiftPressed = model.isShiftPressed
-                }
-            )
-        ]
-
-
-viewTree : Tree -> Zipper -> Html Msg
-viewTree tree currentNode =
-    viewForest (MultiwayTree.children tree) (initialZipper tree) currentNode
+viewTree : Zipper -> Html Msg
+viewTree currentNode =
+    let
+        tree =
+            getTreeRootFromZipper currentNode
+    in
+        viewForest
+            (MultiwayTree.children tree)
+            (initialZipper tree)
+            currentNode
 
 
 viewTreeNode : Tree -> Zipper -> Zipper -> List (Html Msg)
@@ -607,9 +689,21 @@ viewTreeNode node zipper currentNode =
                     , onInput UpdateNodeText
                     , preventDefaultForKeyCodes [ enter, up, down, tab ]
                     , style
-                        [ ( "border", "none" )
-                        , ( "width", "100%" )
-                        ]
+                        (let
+                            isCurrentNode =
+                                (fst zipper) `hasSameDatumThan` (fst currentNode)
+
+                            highlightedStyle =
+                                if isCurrentNode then
+                                    [ ( "background-color", "lightblue" ) ]
+                                else
+                                    []
+                         in
+                            [ ( "border", "none" )
+                            , ( "width", "100%" )
+                            ]
+                                ++ highlightedStyle
+                        )
                     ]
                     []
                 ]
@@ -630,9 +724,8 @@ viewForest forest zipper currentNode =
             (\index node ->
                 let
                     zipper' =
-                        justOrCrash
-                            "Should never reach this case (List.indexedMap reaches only existing children)"
-                            (MultiwayTreeZipper.goToChild index zipper)
+                        MultiwayTreeZipper.goToChild index zipper
+                            |> justOrCrash "viewForest"
                 in
                     viewTreeNode node zipper' currentNode
             )
@@ -657,9 +750,12 @@ updateWithStorage msg model =
     let
         ( newModel, cmds ) =
             update msg model
+
+        tree =
+            getTreeRootFromZipper model.currentNode
     in
         ( newModel
-        , Cmd.batch [ setStorage (serialize model.tree), cmds ]
+        , Cmd.batch [ setStorage (serialize tree), cmds ]
         )
 
 
