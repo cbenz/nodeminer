@@ -10,7 +10,7 @@ Still in development!
 
 I'd like to implement:
 
-- [ ] a unique tree with no size limit and movable nodes
+- [ ] a unique tree with no size limit, movable nodes, undo/redo, history, no deletion but archive
 - [ ] "capture" external contents in an "Inbox" node and remember source URL
 - [ ] decorate each node with #tags, @contacts, !dates and lat/lon coordinates
 - [ ] allow rich contents in nodes like clickable URLs, images, geo maps and why not esoteric things like music notes, perhaps with plugins
