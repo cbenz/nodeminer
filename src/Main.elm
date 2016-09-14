@@ -1,11 +1,12 @@
 port module Main exposing (..)
 
 import Char
+import String
 import Debug
 import Dom
 import Html exposing (..)
 import Html.App as App
-import Html.Attributes exposing (id, style, value)
+import Html.Attributes exposing (disabled, id, style, value)
 import Html.Events exposing (onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
@@ -34,6 +35,11 @@ main =
 
 type alias KeyCode =
     Int
+
+
+backspace : KeyCode
+backspace =
+    8
 
 
 tab : KeyCode
@@ -126,12 +132,14 @@ getNodeIdAttribute id =
 -- TASK HELPERS
 
 
-focusDomNode : Zipper -> Cmd Msg
-focusDomNode node =
-    Task.perform
-        (\_ -> NoOp)
-        (\_ -> NoOp)
-        (Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum node).id))
+performBlind : Task a b -> Cmd Msg
+performBlind =
+    Task.perform (always NoOp) (always NoOp)
+
+
+focusTask : Zipper -> Task Dom.Error ()
+focusTask zipper =
+    Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum zipper).id)
 
 
 
@@ -187,6 +195,16 @@ nextNode zipper =
 hasSameDatumThan : MultiwayTree.Tree a -> MultiwayTree.Tree a -> Bool
 hasSameDatumThan a b =
     MultiwayTree.datum a == MultiwayTree.datum b
+
+
+getText : Zipper -> String
+getText =
+    fst >> MultiwayTree.datum >> .text
+
+
+isTextEmpty : Zipper -> Bool
+isTextEmpty =
+    getText >> String.isEmpty
 
 
 initialZipper : MultiwayTree.Tree a -> MultiwayTreeZipper.Zipper a
@@ -274,6 +292,38 @@ isLastSibling zipper =
         index == nbSiblings - 1
 
 
+canGoToPrevious : MultiwayTreeZipper.Zipper a -> Bool
+canGoToPrevious =
+    not << isFirstVisibleNode
+
+
+canGoToNext : MultiwayTreeZipper.Zipper a -> Bool
+canGoToNext zipper =
+    case MultiwayTreeZipper.goToNext zipper of
+        Just _ ->
+            True
+
+        Nothing ->
+            False
+
+
+{-| Cannot remove latest first-level node.
+-}
+canRemove : MultiwayTreeZipper.Zipper a -> Bool
+canRemove zipper =
+    isFirstVisibleNode zipper && List.length (getSiblings zipper) == 1
+
+
+canIndent : MultiwayTreeZipper.Zipper a -> Bool
+canIndent zipper =
+    findIndexInSiblings zipper > 0
+
+
+canDedent : MultiwayTreeZipper.Zipper a -> Bool
+canDedent =
+    not << isFirstLevelNode
+
+
 {-| Inserts a `Tree` as the next sibling of the current focus. Does not move the focus.
 -}
 insertSiblingBelow : MultiwayTree.Tree a -> MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
@@ -328,24 +378,6 @@ removeCurrentAndGoUp zipper =
             `Maybe.andThen` MultiwayTreeZipper.updateChildren children'
 
 
-goToCorrectChildAfterRemoval :
-    MultiwayTreeZipper.Zipper a
-    -> MultiwayTreeZipper.Zipper a
-    -> Maybe (MultiwayTreeZipper.Zipper a)
-goToCorrectChildAfterRemoval zipper parent =
-    if hasChildren parent then
-        if isLastSibling zipper then
-            MultiwayTreeZipper.goToRightMostChild parent
-        else
-            let
-                index =
-                    findIndexInSiblings zipper
-            in
-                MultiwayTreeZipper.goToChild index parent
-    else
-        Just parent
-
-
 goToNextSibling : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
 goToNextSibling zipper =
     let
@@ -354,16 +386,6 @@ goToNextSibling zipper =
     in
         MultiwayTreeZipper.goUp zipper
             `Maybe.andThen` MultiwayTreeZipper.goToChild (index + 1)
-
-
-
--- MultiwayTreeZipper.goToChild index parent
-
-
-removeCurrent : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
-removeCurrent zipper =
-    removeCurrentAndGoUp zipper
-        `Maybe.andThen` goToCorrectChildAfterRemoval zipper
 
 
 
@@ -441,7 +463,7 @@ init serializedTree =
           , isCtrlPressed = False
           , isShiftPressed = False
           }
-        , focusDomNode currentNode
+        , performBlind (focusTask currentNode)
         )
 
 
@@ -466,7 +488,14 @@ type Msg
     | SetCurrentNode Zipper
     | KeyDown KeyCode
     | KeyUp KeyCode
-    | UpdateNodeText String
+    | SetText String
+    | SelectPreviousNode
+    | SelectNextNode
+    | InsertNodeBelow
+    | RemoveCurrentNode
+    | RemoveCurrentNodeFromBackspace
+    | IndentCurrentNode
+    | DedentCurrentNode
     | ResetToSampleTree
 
 
@@ -485,98 +514,22 @@ update msg model =
             else if keyCode == shift then
                 ( { model | isShiftPressed = True }, Cmd.none )
             else if keyCode == up then
-                let
-                    currentNode' =
-                        if isFirstVisibleNode model.currentNode then
-                            model.currentNode
-                        else
-                            MultiwayTreeZipper.goToPrevious model.currentNode
-                                |> justOrCrash "update: keyCode == up"
-                in
-                    ( { model | currentNode = currentNode' }
-                    , focusDomNode currentNode'
-                    )
+                update SelectPreviousNode model
             else if keyCode == down then
-                let
-                    currentNode' =
-                        MultiwayTreeZipper.goToNext model.currentNode
-                            |> Maybe.withDefault model.currentNode
-                in
-                    ( { model | currentNode = currentNode' }
-                    , focusDomNode currentNode'
-                    )
+                update SelectNextNode model
             else if keyCode == enter then
-                let
-                    newNode =
-                        nextNode model.currentNode
-
-                    currentNode' =
-                        if hasChildren model.currentNode then
-                            MultiwayTreeZipper.insertChild newNode model.currentNode
-                                `Maybe.andThen` MultiwayTreeZipper.goToChild 0
-                                |> justOrCrash "update: keyCode == enter; goToChild 0"
-                        else
-                            insertSiblingBelow newNode model.currentNode
-                                `Maybe.andThen` MultiwayTreeZipper.goToNext
-                                |> justOrCrash "update: keyCode == enter; goToNext"
-                in
-                    ( { model | currentNode = currentNode' }
-                    , focusDomNode currentNode'
-                    )
+                update InsertNodeBelow model
             else if keyCode == tab then
-                if model.isShiftPressed then
-                    if isFirstLevelNode model.currentNode then
-                        -- To be dedented the node must have a depth > 1.
-                        ( model, Cmd.none )
-                    else
-                        let
-                            currentNode' =
-                                removeCurrentAndGoUp model.currentNode
-                                    `Maybe.andThen` insertSiblingBelow (fst model.currentNode)
-                                    `Maybe.andThen` goToNextSibling
-                                    |> justOrCrash "update: keyCode == tab; model.isShiftPressed"
-                        in
-                            ( { model | currentNode = currentNode' }
-                            , focusDomNode currentNode'
-                            )
-                else
-                    let
-                        index =
-                            findIndexInSiblings model.currentNode
-                    in
-                        if index > 0 then
-                            let
-                                currentNode' =
-                                    removeCurrentAndGoUp model.currentNode
-                                        `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
-                                        `Maybe.andThen` MultiwayTreeZipper.appendChild (fst model.currentNode)
-                                        `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
-                                        |> justOrCrash "update: keyCode == tab; not model.isShiftPressed; index > 0"
-                            in
-                                ( { model | currentNode = currentNode' }
-                                , focusDomNode currentNode'
-                                )
-                        else
-                            -- To be indented the node must have at least a previous sibling.
-                            ( model, Cmd.none )
-            else if Char.fromCode keyCode == 'K' then
-                if isFirstVisibleNode model.currentNode && List.length (getSiblings model.currentNode) == 1 then
-                    -- Cannot remove latest first-level node.
-                    ( model, Cmd.none )
-                else
-                    let
-                        currentNode' =
-                            removeCurrent model.currentNode
-                                |> justOrCrash "update: keyCode == K"
-                    in
-                        ( { model | currentNode = currentNode' }
-                        , focusDomNode currentNode'
-                        )
+                update
+                    (if model.isShiftPressed then
+                        DedentCurrentNode
+                     else
+                        IndentCurrentNode
+                    )
+                    model
+            else if Char.fromCode keyCode == 'K' && model.isCtrlPressed && model.isShiftPressed then
+                update RemoveCurrentNode model
             else
-                -- let
-                --     _ =
-                --         Debug.log "unknown keyCode" keyCode
-                -- in
                 ( model, Cmd.none )
 
         KeyUp keyCode ->
@@ -587,27 +540,151 @@ update msg model =
             else
                 ( model, Cmd.none )
 
-        UpdateNodeText text ->
+        SetText text ->
             let
                 currentNode' =
                     MultiwayTreeZipper.updateDatum
                         (\datum -> { datum | text = text })
                         model.currentNode
-                        |> justOrCrash "update: UpdateNodeText"
+                        |> justOrCrash "SetText"
+            in
+                ( { model | currentNode = currentNode' }, Cmd.none )
+
+        SelectPreviousNode ->
+            let
+                currentNode' =
+                    if canGoToPrevious model.currentNode then
+                        MultiwayTreeZipper.goToPrevious model.currentNode
+                            |> justOrCrash "SelectPreviousNode"
+                    else
+                        model.currentNode
             in
                 ( { model | currentNode = currentNode' }
-                , Cmd.none
+                , performBlind (focusTask currentNode')
                 )
 
-        ResetToSampleTree ->
+        SelectNextNode ->
             let
-                currentNode =
-                    MultiwayTreeZipper.goToChild 0 (initialZipper sampleTree)
-                        |> justOrCrash "update: ResetToSampleTree"
+                currentNode' =
+                    if canGoToNext model.currentNode then
+                        MultiwayTreeZipper.goToNext model.currentNode
+                            |> justOrCrash "SelectNextNode"
+                    else
+                        model.currentNode
             in
-                ( { model | currentNode = currentNode }
-                , Cmd.none
+                ( { model | currentNode = currentNode' }
+                , performBlind (focusTask currentNode')
                 )
+
+        InsertNodeBelow ->
+            let
+                newNode =
+                    nextNode model.currentNode
+
+                currentNode' =
+                    if hasChildren model.currentNode then
+                        MultiwayTreeZipper.insertChild newNode model.currentNode
+                            `Maybe.andThen` MultiwayTreeZipper.goToChild 0
+                            |> justOrCrash "InsertNodeBelow; goToChild 0"
+                    else
+                        insertSiblingBelow newNode model.currentNode
+                            `Maybe.andThen` MultiwayTreeZipper.goToNext
+                            |> justOrCrash "InsertNodeBelow; goToNext"
+            in
+                ( { model | currentNode = currentNode' }
+                , performBlind (focusTask currentNode')
+                )
+
+        IndentCurrentNode ->
+            let
+                index =
+                    findIndexInSiblings model.currentNode
+            in
+                if canIndent model.currentNode then
+                    let
+                        currentNode' =
+                            removeCurrentAndGoUp model.currentNode
+                                `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
+                                `Maybe.andThen` MultiwayTreeZipper.appendChild (fst model.currentNode)
+                                `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
+                                |> justOrCrash "IndentCurrentNode"
+                    in
+                        ( { model | currentNode = currentNode' }
+                        , performBlind (focusTask currentNode')
+                        )
+                else
+                    -- To be indented the node must have at least a previous sibling.
+                    ( model, Cmd.none )
+
+        DedentCurrentNode ->
+            if canDedent model.currentNode then
+                let
+                    currentNode' =
+                        removeCurrentAndGoUp model.currentNode
+                            `Maybe.andThen` insertSiblingBelow (fst model.currentNode)
+                            `Maybe.andThen` goToNextSibling
+                            |> justOrCrash "DedentCurrentNode"
+                in
+                    ( { model | currentNode = currentNode' }
+                    , performBlind (focusTask currentNode')
+                    )
+            else
+                -- To be dedented the node must have a depth > 1.
+                ( model, Cmd.none )
+
+        RemoveCurrentNode ->
+            if canRemove model.currentNode then
+                ( model, Cmd.none )
+            else
+                let
+                    currentNode' =
+                        removeCurrentAndGoUp model.currentNode
+                            `Maybe.andThen`
+                                (\parent ->
+                                    if hasChildren parent then
+                                        if isLastSibling model.currentNode then
+                                            MultiwayTreeZipper.goToRightMostChild parent
+                                        else
+                                            let
+                                                index =
+                                                    findIndexInSiblings model.currentNode
+                                            in
+                                                MultiwayTreeZipper.goToChild index parent
+                                    else
+                                        Just parent
+                                )
+                            |> justOrCrash "RemoveCurrentNode"
+                in
+                    ( { model | currentNode = currentNode' }
+                    , performBlind (focusTask currentNode')
+                    )
+
+        RemoveCurrentNodeFromBackspace ->
+            if canRemove model.currentNode then
+                ( model, Cmd.none )
+            else
+                let
+                    currentNode' =
+                        removeCurrentAndGoUp model.currentNode
+                            `Maybe.andThen`
+                                (\parent ->
+                                    if hasChildren parent then
+                                        let
+                                            index =
+                                                findIndexInSiblings model.currentNode
+                                        in
+                                            MultiwayTreeZipper.goToChild (max 0 (index - 1)) parent
+                                    else
+                                        Just parent
+                                )
+                            |> justOrCrash "RemoveCurrentNodeFromBackspace"
+                in
+                    ( { model | currentNode = currentNode' }
+                    , performBlind (focusTask currentNode')
+                    )
+
+        ResetToSampleTree ->
+            init Nothing
 
 
 
@@ -621,14 +698,44 @@ view model =
         , viewTree model.currentNode
         , hr [] []
         , p []
-            [ text "Keyboard shortcuts"
-            , ul []
-                [ li [] [ text "Up - select previous node" ]
-                , li [] [ text "Down - select next node" ]
-                , li [] [ text "Enter - insert a node below" ]
-                , li [] [ text "Tab - indent a node" ]
-                , li [] [ text "Shift-Tab - dedent a node" ]
-                , li [] [ text "Ctrl-Shift-K - remove the current node" ]
+            [ text "Keyboard shortcuts (click on buttons to trigger)"
+            , ul [ style [ ( "line-height", "2em" ) ] ]
+                [ li []
+                    [ button
+                        [ disabled (not (canGoToPrevious model.currentNode))
+                        , onClick SelectPreviousNode
+                        ]
+                        [ text "Up - select previous node" ]
+                    ]
+                , li []
+                    [ button
+                        [ onClick SelectNextNode
+                        , disabled (not (canGoToNext model.currentNode))
+                        ]
+                        [ text "Down - select next node" ]
+                    ]
+                , li [] [ button [ onClick InsertNodeBelow ] [ text "Enter - insert a node below" ] ]
+                , li []
+                    [ button
+                        [ onClick IndentCurrentNode
+                        , disabled (not (canIndent model.currentNode))
+                        ]
+                        [ text "Tab - indent the current node" ]
+                    ]
+                , li []
+                    [ button
+                        [ onClick DedentCurrentNode
+                        , disabled (not (canDedent model.currentNode))
+                        ]
+                        [ text "Shift-Tab - dedent the current node" ]
+                    ]
+                , li []
+                    [ button
+                        [ onClick RemoveCurrentNode
+                        , disabled (canRemove model.currentNode)
+                        ]
+                        [ text "Ctrl-Shift-K - remove the current node" ]
+                    ]
                 ]
             ]
         , button
@@ -661,33 +768,40 @@ viewTreeNode node zipper currentNode =
         datum =
             MultiwayTree.datum node
 
-        preventDefaultForKeyCodes : List KeyCode -> Attribute Msg
-        preventDefaultForKeyCodes keyCodes =
-            let
-                eventOptions =
-                    { stopPropagation = False, preventDefault = True }
-
-                filterKey keyCode =
-                    if List.any ((==) keyCode) keyCodes then
-                        Ok keyCode
-                    else
-                        Err "ignored input"
-
-                decoder =
-                    Decode.customDecoder Html.Events.keyCode filterKey
-                        |> Decode.map (always NoOp)
-            in
-                onWithOptions "keydown" eventOptions decoder
-
         liHtml =
             li
-                [ onClick (SetCurrentNode zipper)
-                ]
+                [ onClick (SetCurrentNode zipper) ]
                 [ input
                     [ id (getNodeIdAttribute datum.id)
                     , value datum.text
-                    , onInput UpdateNodeText
-                    , preventDefaultForKeyCodes [ enter, up, down, tab ]
+                    , let
+                        eventOptions =
+                            { preventDefault = True, stopPropagation = False }
+
+                        text =
+                            getText currentNode
+
+                        filterKey keyCode =
+                            if
+                                List.member keyCode [ enter, up, down, tab ]
+                                    || (keyCode == backspace && String.isEmpty text)
+                            then
+                                Ok keyCode
+                            else
+                                Err "Will be handled by input event"
+
+                        decoder =
+                            Decode.customDecoder Html.Events.keyCode filterKey
+                                |> Decode.map
+                                    (\keyCode ->
+                                        if keyCode == backspace then
+                                            RemoveCurrentNodeFromBackspace
+                                        else
+                                            NoOp
+                                    )
+                      in
+                        onWithOptions "keydown" eventOptions decoder
+                    , onInput SetText
                     , style
                         (let
                             isCurrentNode =
