@@ -2,11 +2,12 @@ port module Main exposing (..)
 
 import Char
 import String
+import Regex exposing (Regex)
 import Debug
 import Dom
 import Html exposing (..)
 import Html.App as App
-import Html.Attributes exposing (disabled, id, style, value)
+import Html.Attributes exposing (disabled, href, id, rel, style, target, value)
 import Html.Events exposing (onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
@@ -398,12 +399,12 @@ sampleTree =
         0
         [ node "Inbox"
             1
-            [ node "Faire les courses" 2 []
-            , node "Aller au cinéma" 3 []
+            [ node "Faire les courses #urgent" 2 []
+            , node "Aller au cinéma http://allocine.com/" 3 []
             , node "Rappeler ces personnes"
                 4
-                [ node "Bruno" 5 []
-                , node "Laëtitia" 6 []
+                [ node "@Bruno" 5 []
+                , node "@Laëtitia" 6 []
                 ]
             ]
         , node "Projets"
@@ -485,7 +486,7 @@ subscriptions model =
 
 type Msg
     = NoOp
-    | SetCurrentNode Zipper
+    | FocusNode Zipper
     | KeyDown KeyCode
     | KeyUp KeyCode
     | SetText String
@@ -505,8 +506,10 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        SetCurrentNode zipper ->
-            ( { model | currentNode = zipper }, Cmd.none )
+        FocusNode zipper ->
+            ( { model | currentNode = zipper }
+            , performBlind (focusTask zipper)
+            )
 
         KeyDown keyCode ->
             if keyCode == ctrl then
@@ -559,9 +562,7 @@ update msg model =
                     else
                         model.currentNode
             in
-                ( { model | currentNode = currentNode' }
-                , performBlind (focusTask currentNode')
-                )
+                update (FocusNode currentNode') model
 
         SelectNextNode ->
             let
@@ -572,9 +573,7 @@ update msg model =
                     else
                         model.currentNode
             in
-                ( { model | currentNode = currentNode' }
-                , performBlind (focusTask currentNode')
-                )
+                update (FocusNode currentNode') model
 
         InsertNodeBelow ->
             let
@@ -591,9 +590,7 @@ update msg model =
                             `Maybe.andThen` MultiwayTreeZipper.goToNext
                             |> justOrCrash "InsertNodeBelow; goToNext"
             in
-                ( { model | currentNode = currentNode' }
-                , performBlind (focusTask currentNode')
-                )
+                update (FocusNode currentNode') model
 
         IndentCurrentNode ->
             let
@@ -609,9 +606,7 @@ update msg model =
                                 `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
                                 |> justOrCrash "IndentCurrentNode"
                     in
-                        ( { model | currentNode = currentNode' }
-                        , performBlind (focusTask currentNode')
-                        )
+                        update (FocusNode currentNode') model
                 else
                     -- To be indented the node must have at least a previous sibling.
                     ( model, Cmd.none )
@@ -625,9 +620,7 @@ update msg model =
                             `Maybe.andThen` goToNextSibling
                             |> justOrCrash "DedentCurrentNode"
                 in
-                    ( { model | currentNode = currentNode' }
-                    , performBlind (focusTask currentNode')
-                    )
+                    update (FocusNode currentNode') model
             else
                 -- To be dedented the node must have a depth > 1.
                 ( model, Cmd.none )
@@ -655,9 +648,7 @@ update msg model =
                                 )
                             |> justOrCrash "RemoveCurrentNode"
                 in
-                    ( { model | currentNode = currentNode' }
-                    , performBlind (focusTask currentNode')
-                    )
+                    update (FocusNode currentNode') model
 
         RemoveCurrentNodeFromBackspace ->
             if canRemove model.currentNode then
@@ -679,9 +670,7 @@ update msg model =
                                 )
                             |> justOrCrash "RemoveCurrentNodeFromBackspace"
                 in
-                    ( { model | currentNode = currentNode' }
-                    , performBlind (focusTask currentNode')
-                    )
+                    update (FocusNode currentNode') model
 
         ResetToSampleTree ->
             init Nothing
@@ -756,10 +745,12 @@ viewTree currentNode =
         tree =
             getTreeRootFromZipper currentNode
     in
-        viewForest
-            (MultiwayTree.children tree)
-            (initialZipper tree)
-            currentNode
+        div [ style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ] ]
+            [ viewForest
+                (MultiwayTree.children tree)
+                (initialZipper tree)
+                currentNode
+            ]
 
 
 viewTreeNode : Tree -> Zipper -> Zipper -> List (Html Msg)
@@ -770,56 +761,75 @@ viewTreeNode node zipper currentNode =
 
         liHtml =
             li
-                [ onClick (SetCurrentNode zipper) ]
-                [ input
-                    [ id (getNodeIdAttribute datum.id)
-                    , value datum.text
-                    , let
-                        eventOptions =
-                            { preventDefault = True, stopPropagation = False }
+                []
+                [ let
+                    isCurrentNode =
+                        (fst zipper) `hasSameDatumThan` (fst currentNode)
+                  in
+                    if isCurrentNode then
+                        input
+                            [ id (getNodeIdAttribute datum.id)
+                            , value datum.text
+                            , let
+                                eventOptions =
+                                    { preventDefault = True, stopPropagation = False }
 
-                        text =
-                            getText currentNode
+                                filterKey keyCode =
+                                    if
+                                        List.member keyCode [ enter, up, down, tab ]
+                                            || (keyCode == backspace && String.isEmpty datum.text)
+                                    then
+                                        Ok keyCode
+                                    else
+                                        Err "Will be handled by input event"
 
-                        filterKey keyCode =
-                            if
-                                List.member keyCode [ enter, up, down, tab ]
-                                    || (keyCode == backspace && String.isEmpty text)
-                            then
-                                Ok keyCode
-                            else
-                                Err "Will be handled by input event"
-
-                        decoder =
-                            Decode.customDecoder Html.Events.keyCode filterKey
-                                |> Decode.map
-                                    (\keyCode ->
-                                        if keyCode == backspace then
-                                            RemoveCurrentNodeFromBackspace
-                                        else
-                                            NoOp
-                                    )
-                      in
-                        onWithOptions "keydown" eventOptions decoder
-                    , onInput SetText
-                    , style
-                        (let
-                            isCurrentNode =
-                                (fst zipper) `hasSameDatumThan` (fst currentNode)
-
-                            highlightedStyle =
-                                if isCurrentNode then
-                                    [ ( "background-color", "lightblue" ) ]
-                                else
-                                    []
-                         in
-                            [ ( "border", "none" )
-                            , ( "width", "100%" )
+                                decoder =
+                                    Decode.customDecoder Html.Events.keyCode filterKey
+                                        |> Decode.map
+                                            (\keyCode ->
+                                                if keyCode == backspace then
+                                                    RemoveCurrentNodeFromBackspace
+                                                else
+                                                    NoOp
+                                            )
+                              in
+                                onWithOptions "keydown" eventOptions decoder
+                            , onInput SetText
+                            , style
+                                [ ( "border", "none" )
+                                , ( "background-color", "lightblue" )
+                                , ( "font-size", "1em" )
+                                , ( "width", "100%" )
+                                ]
                             ]
-                                ++ highlightedStyle
-                        )
-                    ]
-                    []
+                            []
+                    else
+                        div
+                            [ onClick (FocusNode zipper)
+                            , style
+                                [ -- Compensate input element border
+                                  ( "padding", "1px 0" )
+                                , ( "white-space", "pre-wrap" )
+                                ]
+                            ]
+                            (let
+                                -- From http://stackoverflow.com/questions/280712/javascript-unicode-regexes
+                                unicodeCharacter =
+                                    "[\\u00BF-\\u1FFF\\u2C00-\\uD7FF\\w]"
+                             in
+                                (fragments
+                                    datum.text
+                                    [ ( Regex.regex ("#" ++ unicodeCharacter ++ "+"), Tag )
+                                    , ( Regex.regex ("@" ++ unicodeCharacter ++ "+"), Contact )
+                                    , ( -- From Form.Validate
+                                        Regex.regex "(https?://)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\w \\.-]*)*/?"
+                                            |> Regex.caseInsensitive
+                                      , Url
+                                      )
+                                    ]
+                                )
+                                    |> List.map viewFragment
+                            )
                 ]
 
         nodeChildren =
@@ -846,6 +856,92 @@ viewForest forest zipper currentNode =
             forest
             |> List.concat
         )
+
+
+type Fragment
+    = StringFragment String
+    | MatchFragment MatchType String
+
+
+type MatchType
+    = Tag
+    | Contact
+    | Url
+
+
+fragments : String -> List ( Regex, MatchType ) -> List Fragment
+fragments str =
+    let
+        fromRegex : Regex -> MatchType -> String -> List Fragment
+        fromRegex regex matchType str =
+            let
+                matches =
+                    Regex.find Regex.All regex str
+
+                fromMatches : String -> List Regex.Match -> Int -> List Fragment
+                fromMatches accStr accMatches accIndex =
+                    case accMatches of
+                        [] ->
+                            [ StringFragment accStr ]
+
+                        { match, index } :: remainingMatches ->
+                            StringFragment (String.left (index - accIndex) accStr)
+                                :: MatchFragment matchType match
+                                :: let
+                                    remainingStr =
+                                        String.slice
+                                            ((index - accIndex) + String.length match)
+                                            (String.length accStr)
+                                            accStr
+                                   in
+                                    fromMatches remainingStr remainingMatches (index + String.length match)
+            in
+                if List.isEmpty matches then
+                    [ StringFragment str ]
+                else
+                    fromMatches str matches 0
+
+        initialFragments =
+            [ StringFragment str ]
+    in
+        List.foldl
+            (\( regex, matchType ) accFragments ->
+                accFragments
+                    |> List.concatMap
+                        (\fragment ->
+                            case fragment of
+                                StringFragment str ->
+                                    fromRegex regex matchType str
+
+                                (MatchFragment _ _) as fragment ->
+                                    [ fragment ]
+                        )
+            )
+            initialFragments
+
+
+viewFragment : Fragment -> Html msg
+viewFragment fragment =
+    case fragment of
+        StringFragment str ->
+            text str
+
+        MatchFragment matchType str ->
+            let
+                spanUnderline str =
+                    span
+                        [ style [ ( "text-decoration", "underline" ) ] ]
+                        [ text str ]
+            in
+                case matchType of
+                    Contact ->
+                        spanUnderline str
+
+                    Tag ->
+                        spanUnderline str
+
+                    Url ->
+                        a [ href str, target "_blank", rel "external" ] [ text str ]
 
 
 
