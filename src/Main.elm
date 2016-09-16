@@ -7,7 +7,7 @@ import Debug
 import Dom
 import Html exposing (..)
 import Html.App as App
-import Html.Attributes exposing (disabled, href, id, rel, style, target, value)
+import Html.Attributes exposing (disabled, href, id, rel, style, target, title, value)
 import Html.Events exposing (onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
@@ -326,7 +326,7 @@ canGoToNext zipper =
 -}
 canRemove : MultiwayTreeZipper.Zipper a -> Bool
 canRemove zipper =
-    isFirstVisibleNode zipper && List.length (getSiblings zipper) == 1
+    not (isFirstVisibleNode zipper && List.length (getSiblings zipper) == 1)
 
 
 canIndent : MultiwayTreeZipper.Zipper a -> Bool
@@ -703,8 +703,6 @@ update msg model =
 
         RemoveCurrentNode ->
             if canRemove model.currentNode then
-                ( model, Cmd.none )
-            else
                 let
                     currentNode' =
                         removeCurrentAndGoUp model.currentNode
@@ -725,11 +723,11 @@ update msg model =
                             |> justOrCrash "RemoveCurrentNode"
                 in
                     update (FocusNode currentNode') model
+            else
+                ( model, Cmd.none )
 
         RemoveCurrentNodeFromBackspace ->
             if canRemove model.currentNode then
-                ( model, Cmd.none )
-            else
                 let
                     currentNode' =
                         removeCurrentAndGoUp model.currentNode
@@ -747,6 +745,8 @@ update msg model =
                             |> justOrCrash "RemoveCurrentNodeFromBackspace"
                 in
                     update (FocusNode currentNode') model
+            else
+                ( model, Cmd.none )
 
         ResetToSampleTree ->
             init Nothing
@@ -760,67 +760,10 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1 [] [ text "NoteMiner" ]
+        , viewToolbar model.currentNode
         , viewTree model.currentNode
         , hr [] []
-        , p []
-            [ text "Keyboard shortcuts (click on buttons to trigger)"
-            , ul [ style [ ( "line-height", "2em" ) ] ]
-                [ li []
-                    [ button
-                        [ disabled (not (canGoToPrevious model.currentNode))
-                        , onClick SelectPreviousNode
-                        ]
-                        [ text "Up - select previous node" ]
-                    ]
-                , li []
-                    [ button
-                        [ onClick SelectNextNode
-                        , disabled (not (canGoToNext model.currentNode))
-                        ]
-                        [ text "Down - select next node" ]
-                    ]
-                , li [] [ button [ onClick InsertNodeBelow ] [ text "Enter - insert a node below" ] ]
-                , li []
-                    [ button
-                        [ onClick IndentCurrentNode
-                        , disabled (not (canIndent model.currentNode))
-                        ]
-                        [ text "Tab - indent the current node" ]
-                    ]
-                , li []
-                    [ button
-                        [ onClick DedentCurrentNode
-                        , disabled (not (canDedent model.currentNode))
-                        ]
-                        [ text "Shift-Tab - dedent the current node" ]
-                    ]
-                , li []
-                    [ button
-                        [ onClick MoveCurrentNodeUp
-                        , disabled (not (canMoveUp model.currentNode))
-                        ]
-                        [ text "Alt-Up - move the current node up" ]
-                    ]
-                , li []
-                    [ button
-                        [ onClick MoveCurrentNodeDown
-                        , disabled (not (canMoveDown model.currentNode))
-                        ]
-                        [ text "Alt-Down - move the current node down" ]
-                    ]
-                , li []
-                    [ button
-                        [ onClick RemoveCurrentNode
-                        , disabled (canRemove model.currentNode)
-                        ]
-                        [ text "Ctrl-Shift-K - remove the current node" ]
-                    ]
-                ]
-            ]
-        , button
-            [ onClick ResetToSampleTree
-            ]
-            [ text "Reset to sample tree" ]
+        , button [ onClick ResetToSampleTree ] [ text "Reset to sample tree" ]
         , p []
             [ "The tree is stored and synchronized in localStorage. "
                 ++ "Look at the JavaScript console for error messages."
@@ -1020,6 +963,7 @@ viewFragment fragment =
                     " "
                  else
                     str
+                )
 
         MatchFragment matchType str ->
             let
@@ -1037,6 +981,53 @@ viewFragment fragment =
 
                     Url ->
                         a [ href str, target "_blank", rel "external" ] [ text str ]
+
+
+type alias ActionDescription a =
+    ( Char, String, String, Msg, MultiwayTreeZipper.Zipper a -> Bool )
+
+
+type ToolbarItem a
+    = Action (ActionDescription a)
+    | Separator
+
+
+viewToolbar : MultiwayTreeZipper.Zipper a -> Html Msg
+viewToolbar zipper =
+    let
+        actions =
+            [ Action ( '↑', "Up", "Select the previous node", SelectPreviousNode, canGoToPrevious )
+            , Action ( '↓', "Down", "Select the next node", SelectNextNode, canGoToNext )
+            , Separator
+            , Action ( '↥', "Alt-Up", "Move the selected node upwards", MoveCurrentNodeUp, canMoveUp )
+            , Action ( '↤', "Shift-Tab", "Dedent the selected node", DedentCurrentNode, canDedent )
+            , Action ( '↦', "Tab", "Indent the selected node", IndentCurrentNode, canIndent )
+            , Action ( '↧', "Alt-Down", "Move the selected node downwards", MoveCurrentNodeDown, canMoveDown )
+            , Separator
+            , Action ( '↳', "Enter", "Insert a node below", InsertNodeBelow, always True )
+            , Action ( '✗', "Ctrl-Shift-K", "Remove the selected node", RemoveCurrentNode, canRemove )
+            ]
+    in
+        p [] (List.map (viewToolbarItem zipper) actions)
+
+
+viewToolbarItem :
+    MultiwayTreeZipper.Zipper a
+    -> ToolbarItem a
+    -> Html Msg
+viewToolbarItem zipper item =
+    case item of
+        Action ( symbol, keyName, label, msg, predicate ) ->
+            button
+                [ onClick msg
+                , disabled (not (predicate zipper))
+                , title (keyName ++ " – " ++ label)
+                , style [ ( "height", "2em" ), ( "width", "2em" ), ( "margin-right", "0.5em" ) ]
+                ]
+                [ text (String.fromChar symbol) ]
+
+        Separator ->
+            span [ style [ ( "margin-right", "1em" ) ] ] []
 
 
 
