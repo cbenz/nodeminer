@@ -78,6 +78,11 @@ down =
     40
 
 
+selectedNodeId : String
+selectedNodeId =
+    "selected-node"
+
+
 
 -- LIST HELPERS
 
@@ -126,26 +131,12 @@ justOrCrash msg maybe =
 
 
 
--- HTML HELPERS
-
-
-getNodeIdAttribute : Int -> String
-getNodeIdAttribute id =
-    "node-" ++ (toString id)
-
-
-
 -- TASK HELPERS
 
 
 performBlind : Task a b -> Cmd Msg
 performBlind =
     Task.perform (always NoOp) (always NoOp)
-
-
-focusTask : Zipper -> Task Dom.Error ()
-focusTask zipper =
-    Dom.focus (getNodeIdAttribute (MultiwayTreeZipper.datum zipper).id)
 
 
 
@@ -490,7 +481,7 @@ init serializedTree =
           , isCtrlPressed = False
           , isShiftPressed = False
           }
-        , performBlind (focusTask currentNode)
+        , performBlind (Dom.focus selectedNodeId)
         )
 
 
@@ -536,7 +527,7 @@ update msg model =
 
         FocusNode zipper ->
             ( { model | currentNode = zipper }
-            , performBlind (focusTask zipper)
+            , performBlind (Dom.focus selectedNodeId)
             )
 
         KeyDown keyCode ->
@@ -801,7 +792,7 @@ viewTreeNode node zipper currentNode =
                   in
                     if isCurrentNode then
                         input
-                            [ id (getNodeIdAttribute datum.id)
+                            [ id selectedNodeId
                             , value datum.text
                             , let
                                 eventOptions =
