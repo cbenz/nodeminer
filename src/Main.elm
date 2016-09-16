@@ -906,19 +906,30 @@ fragments str =
                 fromMatches accStr accMatches accIndex =
                     case accMatches of
                         [] ->
-                            [ StringFragment accStr ]
+                            if String.isEmpty accStr then
+                                []
+                            else
+                                [ StringFragment accStr ]
 
                         { match, index } :: remainingMatches ->
-                            StringFragment (String.left (index - accIndex) accStr)
-                                :: MatchFragment matchType match
-                                :: let
-                                    remainingStr =
-                                        String.slice
-                                            ((index - accIndex) + String.length match)
-                                            (String.length accStr)
-                                            accStr
-                                   in
-                                    fromMatches remainingStr remainingMatches (index + String.length match)
+                            let
+                                firstFragmentStr =
+                                    String.left (index - accIndex) accStr
+                            in
+                                (if String.isEmpty firstFragmentStr then
+                                    []
+                                 else
+                                    [ StringFragment firstFragmentStr ]
+                                )
+                                    ++ MatchFragment matchType match
+                                    :: let
+                                        remainingStr =
+                                            String.slice
+                                                ((index - accIndex) + String.length match)
+                                                (String.length accStr)
+                                                accStr
+                                       in
+                                        fromMatches remainingStr remainingMatches (index + String.length match)
             in
                 if List.isEmpty matches then
                     [ StringFragment str ]
