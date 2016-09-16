@@ -1014,7 +1014,12 @@ viewFragment : Fragment -> Html msg
 viewFragment fragment =
     case fragment of
         StringFragment str ->
-            text str
+            text
+                (if String.isEmpty str then
+                    -- Insert a space in the order to make the text node div selectable.
+                    " "
+                 else
+                    str
 
         MatchFragment matchType str ->
             let
