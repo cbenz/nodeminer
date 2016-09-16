@@ -63,6 +63,11 @@ ctrl =
     17
 
 
+alt : KeyCode
+alt =
+    18
+
+
 up : KeyCode
 up =
     38
@@ -281,6 +286,15 @@ findIndexInSiblings zipper =
         findIndexInForest zipper siblings
 
 
+isFirstSibling : MultiwayTreeZipper.Zipper a -> Bool
+isFirstSibling zipper =
+    let
+        index =
+            findIndexInSiblings zipper
+    in
+        index == 0
+
+
 isLastSibling : MultiwayTreeZipper.Zipper a -> Bool
 isLastSibling zipper =
     let
@@ -323,6 +337,16 @@ canIndent zipper =
 canDedent : MultiwayTreeZipper.Zipper a -> Bool
 canDedent =
     not << isFirstLevelNode
+
+
+canMoveUp : MultiwayTreeZipper.Zipper a -> Bool
+canMoveUp =
+    not << isFirstSibling
+
+
+canMoveDown : MultiwayTreeZipper.Zipper a -> Bool
+canMoveDown =
+    not << isLastSibling
 
 
 {-| Inserts a `Tree` as the next sibling of the current focus. Does not move the focus.
@@ -420,6 +444,7 @@ sampleTree =
 
 type alias Model =
     { currentNode : Zipper
+    , isAltPressed : Bool
     , isCtrlPressed : Bool
     , isShiftPressed : Bool
     }
@@ -461,6 +486,7 @@ init serializedTree =
                         (initialZipper sampleTree)
     in
         ( { currentNode = currentNode
+          , isAltPressed = False
           , isCtrlPressed = False
           , isShiftPressed = False
           }
@@ -497,6 +523,8 @@ type Msg
     | RemoveCurrentNodeFromBackspace
     | IndentCurrentNode
     | DedentCurrentNode
+    | MoveCurrentNodeUp
+    | MoveCurrentNodeDown
     | ResetToSampleTree
 
 
@@ -512,14 +540,22 @@ update msg model =
             )
 
         KeyDown keyCode ->
-            if keyCode == ctrl then
+            if keyCode == alt then
+                ( { model | isAltPressed = True }, Cmd.none )
+            else if keyCode == ctrl then
                 ( { model | isCtrlPressed = True }, Cmd.none )
             else if keyCode == shift then
                 ( { model | isShiftPressed = True }, Cmd.none )
             else if keyCode == up then
-                update SelectPreviousNode model
+                if model.isAltPressed then
+                    update MoveCurrentNodeUp model
+                else
+                    update SelectPreviousNode model
             else if keyCode == down then
-                update SelectNextNode model
+                if model.isAltPressed then
+                    update MoveCurrentNodeDown model
+                else
+                    update SelectNextNode model
             else if keyCode == enter then
                 update InsertNodeBelow model
             else if keyCode == tab then
@@ -536,7 +572,9 @@ update msg model =
                 ( model, Cmd.none )
 
         KeyUp keyCode ->
-            if keyCode == ctrl then
+            if keyCode == alt then
+                ( { model | isAltPressed = False }, Cmd.none )
+            else if keyCode == ctrl then
                 ( { model | isCtrlPressed = False }, Cmd.none )
             else if keyCode == shift then
                 ( { model | isShiftPressed = False }, Cmd.none )
@@ -623,6 +661,44 @@ update msg model =
                     update (FocusNode currentNode') model
             else
                 -- To be dedented the node must have a depth > 1.
+                ( model, Cmd.none )
+
+        MoveCurrentNodeUp ->
+            if canMoveUp model.currentNode then
+                let
+                    index =
+                        findIndexInSiblings model.currentNode
+
+                    index' =
+                        index - 1
+
+                    currentNode' =
+                        removeCurrentAndGoUp model.currentNode
+                            `Maybe.andThen` insertChildAtIndex (fst model.currentNode) index'
+                            `Maybe.andThen` MultiwayTreeZipper.goToChild index'
+                            |> justOrCrash "MoveCurrentNodeUp"
+                in
+                    update (FocusNode currentNode') model
+            else
+                ( model, Cmd.none )
+
+        MoveCurrentNodeDown ->
+            if canMoveDown model.currentNode then
+                let
+                    index =
+                        findIndexInSiblings model.currentNode
+
+                    index' =
+                        index + 1
+
+                    currentNode' =
+                        removeCurrentAndGoUp model.currentNode
+                            `Maybe.andThen` insertChildAtIndex (fst model.currentNode) index'
+                            `Maybe.andThen` MultiwayTreeZipper.goToChild index'
+                            |> justOrCrash "MoveCurrentNodeDown"
+                in
+                    update (FocusNode currentNode') model
+            else
                 ( model, Cmd.none )
 
         RemoveCurrentNode ->
@@ -717,6 +793,20 @@ view model =
                         , disabled (not (canDedent model.currentNode))
                         ]
                         [ text "Shift-Tab - dedent the current node" ]
+                    ]
+                , li []
+                    [ button
+                        [ onClick MoveCurrentNodeUp
+                        , disabled (not (canMoveUp model.currentNode))
+                        ]
+                        [ text "Alt-Up - move the current node up" ]
+                    ]
+                , li []
+                    [ button
+                        [ onClick MoveCurrentNodeDown
+                        , disabled (not (canMoveDown model.currentNode))
+                        ]
+                        [ text "Alt-Down - move the current node down" ]
                     ]
                 , li []
                     [ button
