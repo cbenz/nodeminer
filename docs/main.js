@@ -9447,12 +9447,59 @@ var _user$project$Main$serialize = function (tree) {
 		0,
 		_user$project$Main$encodeTreeNode(tree));
 };
+var _user$project$Main$viewToolbarItem = F2(
+	function (zipper, item) {
+		var _p0 = item;
+		if (_p0.ctor === 'Action') {
+			return A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(_p0._0._3),
+						_elm_lang$html$Html_Attributes$disabled(
+						_elm_lang$core$Basics$not(
+							_p0._0._4(zipper))),
+						_elm_lang$html$Html_Attributes$title(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_p0._0._1,
+							A2(_elm_lang$core$Basics_ops['++'], ' – ', _p0._0._2))),
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'height', _1: '2em'},
+								{ctor: '_Tuple2', _0: 'width', _1: '2em'},
+								{ctor: '_Tuple2', _0: 'margin-right', _1: '0.5em'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						_elm_lang$core$String$fromChar(_p0._0._0))
+					]));
+		} else {
+			return A2(
+				_elm_lang$html$Html$span,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'margin-right', _1: '1em'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]));
+		}
+	});
 var _user$project$Main$viewFragment = function (fragment) {
-	var _p0 = fragment;
-	if (_p0.ctor === 'StringFragment') {
-		return _elm_lang$html$Html$text(_p0._0);
+	var _p1 = fragment;
+	if (_p1.ctor === 'StringFragment') {
+		var _p2 = _p1._0;
+		return _elm_lang$html$Html$text(
+			_elm_lang$core$String$isEmpty(_p2) ? ' ' : _p2);
 	} else {
-		var _p2 = _p0._1;
+		var _p4 = _p1._1;
 		var spanUnderline = function (str) {
 			return A2(
 				_elm_lang$html$Html$span,
@@ -9469,40 +9516,40 @@ var _user$project$Main$viewFragment = function (fragment) {
 						_elm_lang$html$Html$text(str)
 					]));
 		};
-		var _p1 = _p0._0;
-		switch (_p1.ctor) {
+		var _p3 = _p1._0;
+		switch (_p3.ctor) {
 			case 'Contact':
-				return spanUnderline(_p2);
+				return spanUnderline(_p4);
 			case 'Tag':
-				return spanUnderline(_p2);
+				return spanUnderline(_p4);
 			default:
 				return A2(
 					_elm_lang$html$Html$a,
 					_elm_lang$core$Native_List.fromArray(
 						[
-							_elm_lang$html$Html_Attributes$href(_p2),
+							_elm_lang$html$Html_Attributes$href(_p4),
 							_elm_lang$html$Html_Attributes$target('_blank'),
 							_elm_lang$html$Html_Attributes$rel('external')
 						]),
 					_elm_lang$core$Native_List.fromArray(
 						[
-							_elm_lang$html$Html$text(_p2)
+							_elm_lang$html$Html$text(_p4)
 						]));
 		}
 	}
 };
 var _user$project$Main$canGoToNext = function (zipper) {
-	var _p3 = _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(zipper);
-	if (_p3.ctor === 'Just') {
+	var _p5 = _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(zipper);
+	if (_p5.ctor === 'Just') {
 		return true;
 	} else {
 		return false;
 	}
 };
 var _user$project$Main$hasChildren = function (zipper) {
-	return function (_p4) {
+	return function (_p6) {
 		return _elm_lang$core$Basics$not(
-			_elm_lang$core$List$isEmpty(_p4));
+			_elm_lang$core$List$isEmpty(_p6));
 	}(
 		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
 			_elm_lang$core$Basics$fst(zipper)));
@@ -9515,16 +9562,16 @@ var _user$project$Main$initialZipper = function (tree) {
 			[])
 	};
 };
-var _user$project$Main$getText = function (_p5) {
+var _user$project$Main$getText = function (_p7) {
 	return function (_) {
 		return _.text;
 	}(
 		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(
-			_elm_lang$core$Basics$fst(_p5)));
+			_elm_lang$core$Basics$fst(_p7)));
 };
-var _user$project$Main$isTextEmpty = function (_p6) {
+var _user$project$Main$isTextEmpty = function (_p8) {
 	return _elm_lang$core$String$isEmpty(
-		_user$project$Main$getText(_p6));
+		_user$project$Main$getText(_p8));
 };
 var _user$project$Main$hasSameDatumThan = F2(
 	function (a, b) {
@@ -9534,9 +9581,9 @@ var _user$project$Main$hasSameDatumThan = F2(
 	});
 var _user$project$Main$nextId = function (tree) {
 	return function (index) {
-		var _p7 = index;
-		if (_p7.ctor === 'Just') {
-			return _p7._0 + 1;
+		var _p9 = index;
+		if (_p9.ctor === 'Just') {
+			return _p9._0 + 1;
 		} else {
 			return 0;
 		}
@@ -9614,39 +9661,28 @@ var _user$project$Main$sampleTree = A3(
 						[]))
 				]))
 		]));
-var _user$project$Main$datumPairToTree = function (_p8) {
-	var _p9 = _p8;
-	var _p10 = _p9._0;
+var _user$project$Main$datumPairToTree = function (_p10) {
+	var _p11 = _p10;
+	var _p12 = _p11._0;
 	return A3(
 		_user$project$Main$node,
-		_p10.text,
-		_p10.id,
-		A2(_elm_lang$core$List$map, _user$project$Main$datumPairToTree, _p9._1));
-};
-var _user$project$Main$getNodeIdAttribute = function (id) {
-	return A2(
-		_elm_lang$core$Basics_ops['++'],
-		'node-',
-		_elm_lang$core$Basics$toString(id));
-};
-var _user$project$Main$focusTask = function (zipper) {
-	return _elm_lang$dom$Dom$focus(
-		_user$project$Main$getNodeIdAttribute(
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(zipper).id));
+		_p12.text,
+		_p12.id,
+		A2(_elm_lang$core$List$map, _user$project$Main$datumPairToTree, _p11._1));
 };
 var _user$project$Main$justOrCrash = F2(
 	function (msg, maybe) {
-		var _p11 = maybe;
-		if (_p11.ctor === 'Just') {
-			return _p11._0;
+		var _p13 = maybe;
+		if (_p13.ctor === 'Just') {
+			return _p13._0;
 		} else {
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Main',
 				{
-					start: {line: 115, column: 5},
-					end: {line: 120, column: 79}
+					start: {line: 125, column: 5},
+					end: {line: 130, column: 79}
 				},
-				_p11)(
+				_p13)(
 				A2(_elm_lang$core$Basics_ops['++'], msg, ': a value should never have been `Nothing`.'));
 		}
 	});
@@ -9660,9 +9696,9 @@ var _user$project$Main$isFirstVisibleNode = function (zipper) {
 			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(0)));
 	return _elm_lang$core$Native_Utils.eq(zipper, firstVisibleNode);
 };
-var _user$project$Main$canGoToPrevious = function (_p13) {
+var _user$project$Main$canGoToPrevious = function (_p15) {
 	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstVisibleNode(_p13));
+		_user$project$Main$isFirstVisibleNode(_p15));
 };
 var _user$project$Main$isFirstLevelNode = function (zipper) {
 	return A2(
@@ -9680,9 +9716,9 @@ var _user$project$Main$isFirstLevelNode = function (zipper) {
 			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
 			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper)));
 };
-var _user$project$Main$canDedent = function (_p14) {
+var _user$project$Main$canDedent = function (_p16) {
 	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstLevelNode(_p14));
+		_user$project$Main$isFirstLevelNode(_p16));
 };
 var _user$project$Main$getTreeRootFromZipper = function (zipper) {
 	return _elm_lang$core$Basics$fst(
@@ -9709,10 +9745,11 @@ var _user$project$Main$getSiblings = function (zipper) {
 		_elm_lang$core$Basics$fst(parent));
 };
 var _user$project$Main$canRemove = function (zipper) {
-	return _user$project$Main$isFirstVisibleNode(zipper) && _elm_lang$core$Native_Utils.eq(
-		_elm_lang$core$List$length(
-			_user$project$Main$getSiblings(zipper)),
-		1);
+	return _elm_lang$core$Basics$not(
+		_user$project$Main$isFirstVisibleNode(zipper) && _elm_lang$core$Native_Utils.eq(
+			_elm_lang$core$List$length(
+				_user$project$Main$getSiblings(zipper)),
+			1));
 };
 var _user$project$Main$findIndexInForest = F2(
 	function (zipper, forest) {
@@ -9733,11 +9770,23 @@ var _user$project$Main$findIndexInSiblings = function (zipper) {
 	var siblings = _user$project$Main$getSiblings(zipper);
 	return A2(_user$project$Main$findIndexInForest, zipper, siblings);
 };
+var _user$project$Main$isFirstSibling = function (zipper) {
+	var index = _user$project$Main$findIndexInSiblings(zipper);
+	return _elm_lang$core$Native_Utils.eq(index, 0);
+};
+var _user$project$Main$canMoveUp = function (_p17) {
+	return _elm_lang$core$Basics$not(
+		_user$project$Main$isFirstSibling(_p17));
+};
 var _user$project$Main$isLastSibling = function (zipper) {
 	var index = _user$project$Main$findIndexInSiblings(zipper);
 	var nbSiblings = _elm_lang$core$List$length(
 		_user$project$Main$getSiblings(zipper));
 	return _elm_lang$core$Native_Utils.eq(index, nbSiblings - 1);
+};
+var _user$project$Main$canMoveDown = function (_p18) {
+	return _elm_lang$core$Basics$not(
+		_user$project$Main$isLastSibling(_p18));
 };
 var _user$project$Main$canIndent = function (zipper) {
 	return _elm_lang$core$Native_Utils.cmp(
@@ -9797,8 +9846,10 @@ var _user$project$Main$insertSiblingBelow = F2(
 		var index = _user$project$Main$findIndexInSiblings(zipper);
 		return A3(_user$project$Main$insertSiblingAtIndex, newTree, index + 1, zipper);
 	});
+var _user$project$Main$selectedNodeId = 'selected-node';
 var _user$project$Main$down = 40;
 var _user$project$Main$up = 38;
+var _user$project$Main$alt = 18;
 var _user$project$Main$ctrl = 17;
 var _user$project$Main$shift = 16;
 var _user$project$Main$enter = 13;
@@ -9818,11 +9869,13 @@ var _user$project$Main$decodeDatum = A3(
 	_user$project$Main$Datum,
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'text', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'id', _elm_lang$core$Json_Decode$int));
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {currentNode: a, isCtrlPressed: b, isShiftPressed: c};
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {currentNode: a, isAltPressed: b, isCtrlPressed: c, isShiftPressed: d};
 	});
 var _user$project$Main$ResetToSampleTree = {ctor: 'ResetToSampleTree'};
+var _user$project$Main$MoveCurrentNodeDown = {ctor: 'MoveCurrentNodeDown'};
+var _user$project$Main$MoveCurrentNodeUp = {ctor: 'MoveCurrentNodeUp'};
 var _user$project$Main$DedentCurrentNode = {ctor: 'DedentCurrentNode'};
 var _user$project$Main$IndentCurrentNode = {ctor: 'IndentCurrentNode'};
 var _user$project$Main$RemoveCurrentNodeFromBackspace = {ctor: 'RemoveCurrentNodeFromBackspace'};
@@ -9871,33 +9924,38 @@ var _user$project$Main$fragments = function (str) {
 		function (regex, matchType, str) {
 			var fromMatches = F3(
 				function (accStr, accMatches, accIndex) {
-					var _p15 = accMatches;
-					if (_p15.ctor === '[]') {
-						return _elm_lang$core$Native_List.fromArray(
+					var _p19 = accMatches;
+					if (_p19.ctor === '[]') {
+						return _elm_lang$core$String$isEmpty(accStr) ? _elm_lang$core$Native_List.fromArray(
+							[]) : _elm_lang$core$Native_List.fromArray(
 							[
 								_user$project$Main$StringFragment(accStr)
 							]);
 					} else {
-						var _p17 = _p15._0.match;
-						var _p16 = _p15._0.index;
+						var _p21 = _p19._0.match;
+						var _p20 = _p19._0.index;
+						var firstFragmentStr = A2(_elm_lang$core$String$left, _p20 - accIndex, accStr);
 						return A2(
-							_elm_lang$core$List_ops['::'],
-							_user$project$Main$StringFragment(
-								A2(_elm_lang$core$String$left, _p16 - accIndex, accStr)),
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$String$isEmpty(firstFragmentStr) ? _elm_lang$core$Native_List.fromArray(
+								[]) : _elm_lang$core$Native_List.fromArray(
+								[
+									_user$project$Main$StringFragment(firstFragmentStr)
+								]),
 							A2(
 								_elm_lang$core$List_ops['::'],
-								A2(_user$project$Main$MatchFragment, matchType, _p17),
+								A2(_user$project$Main$MatchFragment, matchType, _p21),
 								function () {
 									var remainingStr = A3(
 										_elm_lang$core$String$slice,
-										(_p16 - accIndex) + _elm_lang$core$String$length(_p17),
+										(_p20 - accIndex) + _elm_lang$core$String$length(_p21),
 										_elm_lang$core$String$length(accStr),
 										accStr);
 									return A3(
 										fromMatches,
 										remainingStr,
-										_p15._1,
-										_p16 + _elm_lang$core$String$length(_p17));
+										_p19._1,
+										_p20 + _elm_lang$core$String$length(_p21));
 								}()));
 					}
 				});
@@ -9910,17 +9968,17 @@ var _user$project$Main$fragments = function (str) {
 	return A2(
 		_elm_lang$core$List$foldl,
 		F2(
-			function (_p18, accFragments) {
-				var _p19 = _p18;
+			function (_p22, accFragments) {
+				var _p23 = _p22;
 				return A2(
 					_elm_lang$core$List$concatMap,
 					function (fragment) {
-						var _p20 = fragment;
-						if (_p20.ctor === 'StringFragment') {
-							return A3(fromRegex, _p19._0, _p19._1, _p20._0);
+						var _p24 = fragment;
+						if (_p24.ctor === 'StringFragment') {
+							return A3(fromRegex, _p23._0, _p23._1, _p24._0);
 						} else {
 							return _elm_lang$core$Native_List.fromArray(
-								[_p20]);
+								[_p24]);
 						}
 					},
 					accFragments);
@@ -9949,8 +10007,7 @@ var _user$project$Main$viewTreeNode = F3(
 						_elm_lang$html$Html$input,
 						_elm_lang$core$Native_List.fromArray(
 							[
-								_elm_lang$html$Html_Attributes$id(
-								_user$project$Main$getNodeIdAttribute(datum.id)),
+								_elm_lang$html$Html_Attributes$id(_user$project$Main$selectedNodeId),
 								_elm_lang$html$Html_Attributes$value(datum.text),
 								function () {
 								var filterKey = function (keyCode) {
@@ -10079,6 +10136,97 @@ var _user$project$Main$viewTree = function (currentNode) {
 				currentNode)
 			]));
 };
+var _user$project$Main$Separator = {ctor: 'Separator'};
+var _user$project$Main$Action = function (a) {
+	return {ctor: 'Action', _0: a};
+};
+var _user$project$Main$viewToolbar = function (zipper) {
+	var actions = _elm_lang$core$Native_List.fromArray(
+		[
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↑'),
+				_1: 'Up',
+				_2: 'Select the previous node',
+				_3: _user$project$Main$SelectPreviousNode,
+				_4: _user$project$Main$canGoToPrevious
+			}),
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↓'),
+				_1: 'Down',
+				_2: 'Select the next node',
+				_3: _user$project$Main$SelectNextNode,
+				_4: _user$project$Main$canGoToNext
+			}),
+			_user$project$Main$Separator,
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↥'),
+				_1: 'Alt-Up',
+				_2: 'Move the selected node upwards',
+				_3: _user$project$Main$MoveCurrentNodeUp,
+				_4: _user$project$Main$canMoveUp
+			}),
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↤'),
+				_1: 'Shift-Tab',
+				_2: 'Dedent the selected node',
+				_3: _user$project$Main$DedentCurrentNode,
+				_4: _user$project$Main$canDedent
+			}),
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↦'),
+				_1: 'Tab',
+				_2: 'Indent the selected node',
+				_3: _user$project$Main$IndentCurrentNode,
+				_4: _user$project$Main$canIndent
+			}),
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↧'),
+				_1: 'Alt-Down',
+				_2: 'Move the selected node downwards',
+				_3: _user$project$Main$MoveCurrentNodeDown,
+				_4: _user$project$Main$canMoveDown
+			}),
+			_user$project$Main$Separator,
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('↳'),
+				_1: 'Enter',
+				_2: 'Insert a node below',
+				_3: _user$project$Main$InsertNodeBelow,
+				_4: _elm_lang$core$Basics$always(true)
+			}),
+			_user$project$Main$Action(
+			{
+				ctor: '_Tuple5',
+				_0: _elm_lang$core$Native_Utils.chr('✗'),
+				_1: 'Ctrl-Shift-K',
+				_2: 'Remove the selected node',
+				_3: _user$project$Main$RemoveCurrentNode,
+				_4: _user$project$Main$canRemove
+			})
+		]);
+	return A2(
+		_elm_lang$html$Html$p,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		A2(
+			_elm_lang$core$List$map,
+			_user$project$Main$viewToolbarItem(zipper),
+			actions));
+};
 var _user$project$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -10094,6 +10242,7 @@ var _user$project$Main$view = function (model) {
 					[
 						_elm_lang$html$Html$text('NoteMiner')
 					])),
+				_user$project$Main$viewToolbar(model.currentNode),
 				_user$project$Main$viewTree(model.currentNode),
 				A2(
 				_elm_lang$html$Html$hr,
@@ -10101,143 +10250,6 @@ var _user$project$Main$view = function (model) {
 					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[])),
-				A2(
-				_elm_lang$html$Html$p,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$html$Html$text('Keyboard shortcuts (click on buttons to trigger)'),
-						A2(
-						_elm_lang$html$Html$ul,
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html_Attributes$style(
-								_elm_lang$core$Native_List.fromArray(
-									[
-										{ctor: '_Tuple2', _0: 'line-height', _1: '2em'}
-									]))
-							]),
-						_elm_lang$core$Native_List.fromArray(
-							[
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Attributes$disabled(
-												_elm_lang$core$Basics$not(
-													_user$project$Main$canGoToPrevious(model.currentNode))),
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$SelectPreviousNode)
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Up - select previous node')
-											]))
-									])),
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$SelectNextNode),
-												_elm_lang$html$Html_Attributes$disabled(
-												_elm_lang$core$Basics$not(
-													_user$project$Main$canGoToNext(model.currentNode)))
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Down - select next node')
-											]))
-									])),
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$InsertNodeBelow)
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Enter - insert a node below')
-											]))
-									])),
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$IndentCurrentNode),
-												_elm_lang$html$Html_Attributes$disabled(
-												_elm_lang$core$Basics$not(
-													_user$project$Main$canIndent(model.currentNode)))
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Tab - indent the current node')
-											]))
-									])),
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$DedentCurrentNode),
-												_elm_lang$html$Html_Attributes$disabled(
-												_elm_lang$core$Basics$not(
-													_user$project$Main$canDedent(model.currentNode)))
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Shift-Tab - dedent the current node')
-											]))
-									])),
-								A2(
-								_elm_lang$html$Html$li,
-								_elm_lang$core$Native_List.fromArray(
-									[]),
-								_elm_lang$core$Native_List.fromArray(
-									[
-										A2(
-										_elm_lang$html$Html$button,
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html_Events$onClick(_user$project$Main$RemoveCurrentNode),
-												_elm_lang$html$Html_Attributes$disabled(
-												_user$project$Main$canRemove(model.currentNode))
-											]),
-										_elm_lang$core$Native_List.fromArray(
-											[
-												_elm_lang$html$Html$text('Ctrl-Shift-K - remove the current node')
-											]))
-									]))
-							]))
-					])),
 				A2(
 				_elm_lang$html$Html$button,
 				_elm_lang$core$Native_List.fromArray(
@@ -10271,7 +10283,7 @@ var _user$project$Main$decodeTreeNode = A3(
 		_elm_lang$core$Json_Decode_ops[':='],
 		'children',
 		_user$project$Main$lazy(
-			function (_p21) {
+			function (_p25) {
 				return _elm_lang$core$Json_Decode$list(_user$project$Main$decodeTreeNode);
 			})));
 var _user$project$Main$unserialize = function (str) {
@@ -10282,18 +10294,18 @@ var _user$project$Main$unserialize = function (str) {
 };
 var _user$project$Main$init = function (serializedTree) {
 	var tree = function () {
-		var _p22 = serializedTree;
-		if (_p22.ctor === 'Just') {
-			var _p23 = _user$project$Main$unserialize(_p22._0);
-			if (_p23.ctor === 'Ok') {
-				return _p23._0;
+		var _p26 = serializedTree;
+		if (_p26.ctor === 'Just') {
+			var _p27 = _user$project$Main$unserialize(_p26._0);
+			if (_p27.ctor === 'Ok') {
+				return _p27._0;
 			} else {
 				return A2(
 					_elm_lang$core$Debug$log,
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						'Error loading tree in localStorage: ',
-						A2(_elm_lang$core$Basics_ops['++'], _p23._0, ', fallback to sample tree')),
+						A2(_elm_lang$core$Basics_ops['++'], _p27._0, ', fallback to sample tree')),
 					_user$project$Main$sampleTree);
 			}
 		} else {
@@ -10301,12 +10313,12 @@ var _user$project$Main$init = function (serializedTree) {
 		}
 	}();
 	var currentNode = function () {
-		var _p24 = A2(
+		var _p28 = A2(
 			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
 			0,
 			_user$project$Main$initialZipper(tree));
-		if (_p24.ctor === 'Just') {
-			return _p24._0;
+		if (_p28.ctor === 'Just') {
+			return _p28._0;
 		} else {
 			return A2(
 				_elm_lang$core$Debug$log,
@@ -10316,87 +10328,112 @@ var _user$project$Main$init = function (serializedTree) {
 	}();
 	return {
 		ctor: '_Tuple2',
-		_0: {currentNode: currentNode, isCtrlPressed: false, isShiftPressed: false},
+		_0: {currentNode: currentNode, isAltPressed: false, isCtrlPressed: false, isShiftPressed: false},
 		_1: _user$project$Main$performBlind(
-			_user$project$Main$focusTask(currentNode))
+			_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
 	};
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
 		update:
 		while (true) {
-			var _p25 = msg;
-			switch (_p25.ctor) {
+			var _p29 = msg;
+			switch (_p29.ctor) {
 				case 'NoOp':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				case 'FocusNode':
-					var _p26 = _p25._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{currentNode: _p26}),
+							{currentNode: _p29._0}),
 						_1: _user$project$Main$performBlind(
-							_user$project$Main$focusTask(_p26))
+							_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
 					};
 				case 'KeyDown':
-					var _p27 = _p25._0;
-					if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$ctrl)) {
+					var _p30 = _p29._0;
+					if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$alt)) {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{isCtrlPressed: true}),
+								{isAltPressed: true}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
-						if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$shift)) {
+						if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$ctrl)) {
 							return {
 								ctor: '_Tuple2',
 								_0: _elm_lang$core$Native_Utils.update(
 									model,
-									{isShiftPressed: true}),
+									{isCtrlPressed: true}),
 								_1: _elm_lang$core$Platform_Cmd$none
 							};
 						} else {
-							if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$up)) {
-								var _v13 = _user$project$Main$SelectPreviousNode,
-									_v14 = model;
-								msg = _v13;
-								model = _v14;
-								continue update;
+							if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$shift)) {
+								return {
+									ctor: '_Tuple2',
+									_0: _elm_lang$core$Native_Utils.update(
+										model,
+										{isShiftPressed: true}),
+									_1: _elm_lang$core$Platform_Cmd$none
+								};
 							} else {
-								if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$down)) {
-									var _v15 = _user$project$Main$SelectNextNode,
-										_v16 = model;
-									msg = _v15;
-									model = _v16;
-									continue update;
-								} else {
-									if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$enter)) {
-										var _v17 = _user$project$Main$InsertNodeBelow,
-											_v18 = model;
-										msg = _v17;
-										model = _v18;
+								if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$up)) {
+									if (model.isAltPressed) {
+										var _v14 = _user$project$Main$MoveCurrentNodeUp,
+											_v15 = model;
+										msg = _v14;
+										model = _v15;
 										continue update;
 									} else {
-										if (_elm_lang$core$Native_Utils.eq(_p27, _user$project$Main$tab)) {
-											var _v19 = model.isShiftPressed ? _user$project$Main$DedentCurrentNode : _user$project$Main$IndentCurrentNode,
-												_v20 = model;
-											msg = _v19;
-											model = _v20;
+										var _v16 = _user$project$Main$SelectPreviousNode,
+											_v17 = model;
+										msg = _v16;
+										model = _v17;
+										continue update;
+									}
+								} else {
+									if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$down)) {
+										if (model.isAltPressed) {
+											var _v18 = _user$project$Main$MoveCurrentNodeDown,
+												_v19 = model;
+											msg = _v18;
+											model = _v19;
 											continue update;
 										} else {
-											if (_elm_lang$core$Native_Utils.eq(
-												_elm_lang$core$Char$fromCode(_p27),
-												_elm_lang$core$Native_Utils.chr('K')) && (model.isCtrlPressed && model.isShiftPressed)) {
-												var _v21 = _user$project$Main$RemoveCurrentNode,
-													_v22 = model;
-												msg = _v21;
-												model = _v22;
+											var _v20 = _user$project$Main$SelectNextNode,
+												_v21 = model;
+											msg = _v20;
+											model = _v21;
+											continue update;
+										}
+									} else {
+										if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$enter)) {
+											var _v22 = _user$project$Main$InsertNodeBelow,
+												_v23 = model;
+											msg = _v22;
+											model = _v23;
+											continue update;
+										} else {
+											if (_elm_lang$core$Native_Utils.eq(_p30, _user$project$Main$tab)) {
+												var _v24 = model.isShiftPressed ? _user$project$Main$DedentCurrentNode : _user$project$Main$IndentCurrentNode,
+													_v25 = model;
+												msg = _v24;
+												model = _v25;
 												continue update;
 											} else {
-												return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+												if (_elm_lang$core$Native_Utils.eq(
+													_elm_lang$core$Char$fromCode(_p30),
+													_elm_lang$core$Native_Utils.chr('K')) && (model.isCtrlPressed && model.isShiftPressed)) {
+													var _v26 = _user$project$Main$RemoveCurrentNode,
+														_v27 = model;
+													msg = _v26;
+													model = _v27;
+													continue update;
+												} else {
+													return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+												}
 											}
 										}
 									}
@@ -10405,20 +10442,26 @@ var _user$project$Main$update = F2(
 						}
 					}
 				case 'KeyUp':
-					var _p28 = _p25._0;
-					return _elm_lang$core$Native_Utils.eq(_p28, _user$project$Main$ctrl) ? {
+					var _p31 = _p29._0;
+					return _elm_lang$core$Native_Utils.eq(_p31, _user$project$Main$alt) ? {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{isAltPressed: false}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					} : (_elm_lang$core$Native_Utils.eq(_p31, _user$project$Main$ctrl) ? {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{isCtrlPressed: false}),
 						_1: _elm_lang$core$Platform_Cmd$none
-					} : (_elm_lang$core$Native_Utils.eq(_p28, _user$project$Main$shift) ? {
+					} : (_elm_lang$core$Native_Utils.eq(_p31, _user$project$Main$shift) ? {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{isShiftPressed: false}),
 						_1: _elm_lang$core$Platform_Cmd$none
-					} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
+					} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none}));
 				case 'SetText':
 					var currentNode$ = A2(
 						_user$project$Main$justOrCrash,
@@ -10428,7 +10471,7 @@ var _user$project$Main$update = F2(
 							function (datum) {
 								return _elm_lang$core$Native_Utils.update(
 									datum,
-									{text: _p25._0});
+									{text: _p29._0});
 							},
 							model.currentNode));
 					return {
@@ -10443,20 +10486,20 @@ var _user$project$Main$update = F2(
 						_user$project$Main$justOrCrash,
 						'SelectPreviousNode',
 						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToPrevious(model.currentNode)) : model.currentNode;
-					var _v23 = _user$project$Main$FocusNode(currentNode$),
-						_v24 = model;
-					msg = _v23;
-					model = _v24;
+					var _v28 = _user$project$Main$FocusNode(currentNode$),
+						_v29 = model;
+					msg = _v28;
+					model = _v29;
 					continue update;
 				case 'SelectNextNode':
 					var currentNode$ = _user$project$Main$canGoToNext(model.currentNode) ? A2(
 						_user$project$Main$justOrCrash,
 						'SelectNextNode',
 						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(model.currentNode)) : model.currentNode;
-					var _v25 = _user$project$Main$FocusNode(currentNode$),
-						_v26 = model;
-					msg = _v25;
-					model = _v26;
+					var _v30 = _user$project$Main$FocusNode(currentNode$),
+						_v31 = model;
+					msg = _v30;
+					model = _v31;
 					continue update;
 				case 'InsertNodeBelow':
 					var newNode = _user$project$Main$nextNode(model.currentNode);
@@ -10473,10 +10516,10 @@ var _user$project$Main$update = F2(
 							_elm_lang$core$Maybe$andThen,
 							A2(_user$project$Main$insertSiblingBelow, newNode, model.currentNode),
 							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext));
-					var _v27 = _user$project$Main$FocusNode(currentNode$),
-						_v28 = model;
-					msg = _v27;
-					model = _v28;
+					var _v32 = _user$project$Main$FocusNode(currentNode$),
+						_v33 = model;
+					msg = _v32;
+					model = _v33;
 					continue update;
 				case 'IndentCurrentNode':
 					var index = _user$project$Main$findIndexInSiblings(model.currentNode);
@@ -10495,10 +10538,10 @@ var _user$project$Main$update = F2(
 									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$appendChild(
 										_elm_lang$core$Basics$fst(model.currentNode))),
 								_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRightMostChild));
-						var _v29 = _user$project$Main$FocusNode(currentNode$),
-							_v30 = model;
-						msg = _v29;
-						model = _v30;
+						var _v34 = _user$project$Main$FocusNode(currentNode$),
+							_v35 = model;
+						msg = _v34;
+						model = _v35;
 						continue update;
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -10516,18 +10559,66 @@ var _user$project$Main$update = F2(
 									_user$project$Main$insertSiblingBelow(
 										_elm_lang$core$Basics$fst(model.currentNode))),
 								_user$project$Main$goToNextSibling));
-						var _v31 = _user$project$Main$FocusNode(currentNode$),
-							_v32 = model;
-						msg = _v31;
-						model = _v32;
+						var _v36 = _user$project$Main$FocusNode(currentNode$),
+							_v37 = model;
+						msg = _v36;
+						model = _v37;
+						continue update;
+					} else {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					}
+				case 'MoveCurrentNodeUp':
+					if (_user$project$Main$canMoveUp(model.currentNode)) {
+						var index = _user$project$Main$findIndexInSiblings(model.currentNode);
+						var index$ = index - 1;
+						var currentNode$ = A2(
+							_user$project$Main$justOrCrash,
+							'MoveCurrentNodeUp',
+							A2(
+								_elm_lang$core$Maybe$andThen,
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									_user$project$Main$removeCurrentAndGoUp(model.currentNode),
+									A2(
+										_user$project$Main$insertChildAtIndex,
+										_elm_lang$core$Basics$fst(model.currentNode),
+										index$)),
+								_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index$)));
+						var _v38 = _user$project$Main$FocusNode(currentNode$),
+							_v39 = model;
+						msg = _v38;
+						model = _v39;
+						continue update;
+					} else {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					}
+				case 'MoveCurrentNodeDown':
+					if (_user$project$Main$canMoveDown(model.currentNode)) {
+						var index = _user$project$Main$findIndexInSiblings(model.currentNode);
+						var index$ = index + 1;
+						var currentNode$ = A2(
+							_user$project$Main$justOrCrash,
+							'MoveCurrentNodeDown',
+							A2(
+								_elm_lang$core$Maybe$andThen,
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									_user$project$Main$removeCurrentAndGoUp(model.currentNode),
+									A2(
+										_user$project$Main$insertChildAtIndex,
+										_elm_lang$core$Basics$fst(model.currentNode),
+										index$)),
+								_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index$)));
+						var _v40 = _user$project$Main$FocusNode(currentNode$),
+							_v41 = model;
+						msg = _v40;
+						model = _v41;
 						continue update;
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				case 'RemoveCurrentNode':
 					if (_user$project$Main$canRemove(model.currentNode)) {
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					} else {
 						var currentNode$ = A2(
 							_user$project$Main$justOrCrash,
 							'RemoveCurrentNode',
@@ -10546,16 +10637,16 @@ var _user$project$Main$update = F2(
 										return _elm_lang$core$Maybe$Just(parent);
 									}
 								}));
-						var _v33 = _user$project$Main$FocusNode(currentNode$),
-							_v34 = model;
-						msg = _v33;
-						model = _v34;
+						var _v42 = _user$project$Main$FocusNode(currentNode$),
+							_v43 = model;
+						msg = _v42;
+						model = _v43;
 						continue update;
+					} else {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				case 'RemoveCurrentNodeFromBackspace':
 					if (_user$project$Main$canRemove(model.currentNode)) {
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					} else {
 						var currentNode$ = A2(
 							_user$project$Main$justOrCrash,
 							'RemoveCurrentNodeFromBackspace',
@@ -10573,11 +10664,13 @@ var _user$project$Main$update = F2(
 										return _elm_lang$core$Maybe$Just(parent);
 									}
 								}));
-						var _v35 = _user$project$Main$FocusNode(currentNode$),
-							_v36 = model;
-						msg = _v35;
-						model = _v36;
+						var _v44 = _user$project$Main$FocusNode(currentNode$),
+							_v45 = model;
+						msg = _v44;
+						model = _v45;
 						continue update;
+					} else {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				default:
 					return _user$project$Main$init(_elm_lang$core$Maybe$Nothing);
@@ -10587,9 +10680,9 @@ var _user$project$Main$update = F2(
 var _user$project$Main$updateWithStorage = F2(
 	function (msg, model) {
 		var tree = _user$project$Main$getTreeRootFromZipper(model.currentNode);
-		var _p29 = A2(_user$project$Main$update, msg, model);
-		var newModel = _p29._0;
-		var cmds = _p29._1;
+		var _p32 = A2(_user$project$Main$update, msg, model);
+		var newModel = _p32._0;
+		var cmds = _p32._1;
 		return {
 			ctor: '_Tuple2',
 			_0: newModel,
