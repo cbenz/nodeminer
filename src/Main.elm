@@ -1050,7 +1050,7 @@ updateWithStorage msg model =
             update msg model
 
         tree =
-            getTreeRootFromZipper model.currentNode
+            getTreeRootFromZipper newModel.currentNode
     in
         ( newModel
         , Cmd.batch [ setStorage (serialize tree), cmds ]
