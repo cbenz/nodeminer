@@ -8,11 +8,10 @@ import Dom
 import Html exposing (..)
 import Html.App as App
 import Html.Attributes exposing (disabled, href, id, rel, style, target, title, value)
-import Html.Events exposing (onClick, onInput, onWithOptions)
+import Html.Events exposing (on, onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
 import Task exposing (Task)
-import Keyboard
 import Json.Encode as Encode
 import Json.Decode as Decode exposing ((:=))
 
@@ -26,7 +25,7 @@ main =
         { init = init
         , view = view
         , update = updateWithStorage
-        , subscriptions = subscriptions
+        , subscriptions = always Sub.none
         }
 
 
@@ -486,18 +485,6 @@ init serializedTree =
 
 
 
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Keyboard.downs KeyDown
-        , Keyboard.ups KeyUp
-        ]
-
-
-
 -- UPDATE
 
 
@@ -768,8 +755,20 @@ viewTree currentNode =
     let
         tree =
             getTreeRootFromZipper currentNode
+
+        onKeyDown : (Int -> msg) -> Attribute msg
+        onKeyDown tagger =
+            on "keydown" (Decode.map tagger Html.Events.keyCode)
+
+        onKeyUp : (Int -> msg) -> Attribute msg
+        onKeyUp tagger =
+            on "keyup" (Decode.map tagger Html.Events.keyCode)
     in
-        div [ style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ] ]
+        div
+            [ onKeyDown KeyDown
+            , onKeyUp KeyUp
+            , style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ]
+            ]
             [ viewForest
                 (MultiwayTree.children tree)
                 (initialZipper tree)
