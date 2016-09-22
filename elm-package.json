@@ -2,7 +2,7 @@
     "version": "0.0.0",
     "summary": "NoteMiner",
     "repository": "https://github.com/user/project.git",
-    "license": "BSD3",
+    "license": "MIT",
     "source-directories": [
         "src"
     ],
