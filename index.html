@@ -14,11 +14,10 @@
     <body>
         <script src="/_compile/src/Main.elm"></script>
         <script type="text/javascript">
-            var storedState = localStorage.getItem('noteminer');
-            var startingState = storedState ? JSON.parse(storedState) : null;
-            var noteminer = Elm.Main.fullscreen(startingState);
-            noteminer.ports.setStorage.subscribe(function(state) {
-                localStorage.setItem('noteminer', JSON.stringify(state));
+            var serializedTree = localStorage.getItem('noteminer');
+            var noteminer = Elm.Main.fullscreen(serializedTree);
+            noteminer.ports.setStorage.subscribe(function(serializedTree) {
+                localStorage.setItem('noteminer', serializedTree);
             });
         </script>
     </body>
