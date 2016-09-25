@@ -1102,9 +1102,9 @@ viewToolbar model =
             , Action ( '↓', "Down", "Select the next node", SelectNextNode, canGoToNext currentNode )
             , Separator
             , Action ( '↥', "Alt-Up", "Move the selected node upwards", MoveCurrentNodeUp, canMoveUp currentNode )
+            , Action ( '↧', "Alt-Down", "Move the selected node downwards", MoveCurrentNodeDown, canMoveDown currentNode )
             , Action ( '↤', "Shift-Tab", "Dedent the selected node", DedentCurrentNode, canDedent currentNode )
             , Action ( '↦', "Tab", "Indent the selected node", IndentCurrentNode, canIndent currentNode )
-            , Action ( '↧', "Alt-Down", "Move the selected node downwards", MoveCurrentNodeDown, canMoveDown currentNode )
             , Separator
             , Action ( '↳', "Enter", "Insert a node below", InsertNodeBelow, True )
             , Action ( '✗', "Ctrl-Shift-K", "Remove the selected node", RemoveCurrentNode, canRemove currentNode )
