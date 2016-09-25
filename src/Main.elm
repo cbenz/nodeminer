@@ -758,14 +758,21 @@ update msg model =
 
             SetText text ->
                 let
-                    currentZipperUndoList' =
+                    setText zipper =
                         MultiwayTreeZipper.updateDatum
                             (\datum -> { datum | text = text })
-                            currentZipper
+                            zipper
                             |> justOrCrash "SetText"
-                            |> (\state -> UndoList.new state model.currentZipperUndoList)
+
+                    currentZipperUndoList' =
+                        if String.endsWith " " text then
+                            UndoList.new (setText currentZipper) model.currentZipperUndoList
+                        else
+                            UndoList.mapPresent setText model.currentZipperUndoList
                 in
-                    ( { model | currentZipperUndoList = currentZipperUndoList' }, Cmd.none )
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
+                    , Cmd.none
+                    )
 
             SelectPreviousNode ->
                 updateSelectPreviousNode ()
