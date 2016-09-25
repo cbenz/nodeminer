@@ -1121,8 +1121,8 @@ viewToolbar model =
             , Action ( '↳', "Enter", "Insert a node below", InsertNodeBelow, True )
             , Action ( '✗', "Ctrl-Shift-K", "Remove the selected node", RemoveCurrentNode, canRemove currentZipper )
             , Separator
-            , Action ( '<', "Ctrl-Z", "Undo", Undo, UndoList.hasPast model.currentZipperUndoList )
-            , Action ( '>', "Ctrl-Shift-Z", "Redo", Redo, UndoList.hasFuture model.currentZipperUndoList )
+            , Action ( '↩', "Ctrl-Z", "Undo", Undo, UndoList.hasPast model.currentZipperUndoList )
+            , Action ( '↪', "Ctrl-Shift-Z", "Redo", Redo, UndoList.hasFuture model.currentZipperUndoList )
             ]
     in
         p [] (List.map viewToolbarItem actions)
