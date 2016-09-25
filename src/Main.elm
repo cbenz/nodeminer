@@ -512,7 +512,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        currentZipper : Zipper
         currentZipper =
             model.currentZipperUndoList.present
 
