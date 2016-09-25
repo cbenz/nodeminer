@@ -876,28 +876,29 @@ viewTree model =
             , onKeyUp KeyUp
             , style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ]
             ]
-            [ viewForest
-                model
-                (MultiwayTree.children tree)
-                (initialZipper tree)
-                currentZipper
-            ]
+            [ viewTreeNodeChildren model (initialZipper tree) ]
 
 
-viewTreeNode : Model -> Tree -> Zipper -> Zipper -> List (Html Msg)
-viewTreeNode model node zipper currentNode =
+viewTreeNode : Model -> Zipper -> List (Html Msg)
+viewTreeNode model accuZipper =
     let
+        node =
+            fst accuZipper
+
         datum =
             MultiwayTree.datum node
+
+        currentZipper =
+            model.currentZipperUndoList.present
 
         liHtml =
             li
                 []
                 [ let
-                    isCurrentNode =
-                        (fst zipper) `hasSameDatumThan` (fst currentNode)
+                    isCurrentZipper =
+                        (fst accuZipper) `hasSameDatumThan` (fst currentZipper)
                   in
-                    if isCurrentNode then
+                    if isCurrentZipper then
                         input
                             [ id selectedNodeId
                             , value datum.text
@@ -937,7 +938,7 @@ viewTreeNode model node zipper currentNode =
                             []
                     else
                         div
-                            [ onClick (FocusNode zipper)
+                            [ onClick (FocusNode accuZipper)
                             , style
                                 [ -- Compensate input element border
                                   ( "padding", "1px 0" )
@@ -970,24 +971,28 @@ viewTreeNode model node zipper currentNode =
         if List.isEmpty nodeChildren then
             [ liHtml ]
         else
-            [ liHtml, viewForest model nodeChildren zipper currentNode ]
+            [ liHtml, viewTreeNodeChildren model accuZipper ]
 
 
-viewForest : Model -> Forest -> Zipper -> Zipper -> Html Msg
-viewForest model forest zipper currentNode =
-    ul []
-        (List.indexedMap
-            (\index node ->
-                let
-                    zipper' =
-                        MultiwayTreeZipper.goToChild index zipper
-                            |> justOrCrash "viewForest"
-                in
-                    viewTreeNode model node zipper' currentNode
+viewTreeNodeChildren : Model -> Zipper -> Html Msg
+viewTreeNodeChildren model accuZipper =
+    let
+        children =
+            MultiwayTree.children (fst accuZipper)
+    in
+        ul []
+            (List.indexedMap
+                (\index _ ->
+                    let
+                        accuZipper' =
+                            MultiwayTreeZipper.goToChild index accuZipper
+                                |> justOrCrash "viewTreeNodeChildren"
+                    in
+                        viewTreeNode model accuZipper'
+                )
+                children
+                |> List.concat
             )
-            forest
-            |> List.concat
-        )
 
 
 type Fragment
