@@ -434,10 +434,10 @@ sampleTree =
 
 
 type alias Model =
-    { currentNode : UndoList Zipper
-    , isAltPressed : Bool
-    , isCtrlPressed : Bool
-    , isShiftPressed : Bool
+    { currentZipperUndoList : UndoList Zipper
+    , isAltDown : Bool
+    , isCtrlDown : Bool
+    , isShiftDown : Bool
     }
 
 
@@ -466,20 +466,20 @@ init serializedTree =
                         "No tree found in localStorage, fallback to sample tree"
                         sampleTree
 
-        currentNode =
+        zipper =
             case MultiwayTreeZipper.goToChild 0 (initialZipper tree) of
-                Just currentNode ->
-                    currentNode
+                Just zipper ->
+                    zipper
 
                 Nothing ->
                     Debug.log
                         "Error with `goToChild 0` on loaded tree from localStorage, fallback to sample tree"
                         (initialZipper sampleTree)
     in
-        ( { currentNode = UndoList.fresh currentNode
-          , isAltPressed = False
-          , isCtrlPressed = False
-          , isShiftPressed = False
+        ( { currentZipperUndoList = UndoList.fresh zipper
+          , isAltDown = False
+          , isCtrlDown = False
+          , isShiftDown = False
           }
         , performBlind (Dom.focus selectedNodeId)
         )
@@ -512,49 +512,49 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        currentNode : Zipper
-        currentNode =
-            model.currentNode.present
+        currentZipper : Zipper
+        currentZipper =
+            model.currentZipperUndoList.present
 
         updateMoveCurrentNodeUp () =
-            if canMoveUp currentNode then
+            if canMoveUp currentZipper then
                 let
                     index =
-                        findIndexInSiblings currentNode
+                        findIndexInSiblings currentZipper
 
                     index' =
                         index - 1
 
-                    currentNode' =
-                        removeCurrentAndGoUp currentNode
-                            `Maybe.andThen` insertChildAtIndex (fst currentNode) index'
+                    currentZipperUndoList' =
+                        removeCurrentAndGoUp currentZipper
+                            `Maybe.andThen` insertChildAtIndex (fst currentZipper) index'
                             `Maybe.andThen` MultiwayTreeZipper.goToChild index'
                             |> justOrCrash "MoveCurrentNodeUp"
-                            |> (\state -> UndoList.new state model.currentNode)
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
                 in
-                    ( { model | currentNode = currentNode' }
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
                     , performBlind (Dom.focus selectedNodeId)
                     )
             else
                 ( model, Cmd.none )
 
         updateMoveCurrentNodeDown () =
-            if canMoveDown currentNode then
+            if canMoveDown currentZipper then
                 let
                     index =
-                        findIndexInSiblings currentNode
+                        findIndexInSiblings currentZipper
 
                     index' =
                         index + 1
 
-                    currentNode' =
-                        removeCurrentAndGoUp currentNode
-                            `Maybe.andThen` insertChildAtIndex (fst currentNode) index'
+                    currentZipperUndoList' =
+                        removeCurrentAndGoUp currentZipper
+                            `Maybe.andThen` insertChildAtIndex (fst currentZipper) index'
                             `Maybe.andThen` MultiwayTreeZipper.goToChild index'
                             |> justOrCrash "MoveCurrentNodeDown"
-                            |> (\state -> UndoList.new state model.currentNode)
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
                 in
-                    ( { model | currentNode = currentNode' }
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
                     , performBlind (Dom.focus selectedNodeId)
                     )
             else
@@ -562,75 +562,75 @@ update msg model =
 
         updateSelectPreviousNode () =
             let
-                currentNode' =
+                currentZipperUndoList' =
                     UndoList.mapPresent
-                        (\currentNode ->
-                            if canGoToPrevious currentNode then
-                                MultiwayTreeZipper.goToPrevious currentNode
+                        (\zipper ->
+                            if canGoToPrevious zipper then
+                                MultiwayTreeZipper.goToPrevious zipper
                                     |> justOrCrash "SelectPreviousNode"
                             else
-                                currentNode
+                                zipper
                         )
-                        model.currentNode
+                        model.currentZipperUndoList
             in
-                ( { model | currentNode = currentNode' }
+                ( { model | currentZipperUndoList = currentZipperUndoList' }
                 , performBlind (Dom.focus selectedNodeId)
                 )
 
         updateSelectNextNode () =
             let
-                currentNode' =
+                currentZipperUndoList' =
                     UndoList.mapPresent
-                        (\currentNode ->
-                            if canGoToNext currentNode then
-                                MultiwayTreeZipper.goToNext currentNode
+                        (\zipper ->
+                            if canGoToNext zipper then
+                                MultiwayTreeZipper.goToNext zipper
                                     |> justOrCrash "SelectNextNode"
                             else
-                                currentNode
+                                zipper
                         )
-                        model.currentNode
+                        model.currentZipperUndoList
             in
-                ( { model | currentNode = currentNode' }
+                ( { model | currentZipperUndoList = currentZipperUndoList' }
                 , performBlind (Dom.focus selectedNodeId)
                 )
 
         updateInsertNodeBelow () =
             let
                 newNode =
-                    nextNode currentNode
+                    nextNode currentZipper
 
-                currentNode' =
-                    (if hasChildren currentNode then
-                        MultiwayTreeZipper.insertChild newNode currentNode
+                currentZipperUndoList' =
+                    (if hasChildren currentZipper then
+                        MultiwayTreeZipper.insertChild newNode currentZipper
                             `Maybe.andThen` MultiwayTreeZipper.goToChild 0
                             |> justOrCrash "InsertNodeBelow; goToChild 0"
                      else
-                        insertSiblingBelow newNode currentNode
+                        insertSiblingBelow newNode currentZipper
                             `Maybe.andThen` MultiwayTreeZipper.goToNext
                             |> justOrCrash "InsertNodeBelow; goToNext"
                     )
-                        |> (\state -> UndoList.new state model.currentNode)
+                        |> (\state -> UndoList.new state model.currentZipperUndoList)
             in
-                ( { model | currentNode = currentNode' }
+                ( { model | currentZipperUndoList = currentZipperUndoList' }
                 , performBlind (Dom.focus selectedNodeId)
                 )
 
         updateIndentCurrentNode () =
             let
                 index =
-                    findIndexInSiblings currentNode
+                    findIndexInSiblings currentZipper
             in
-                if canIndent currentNode then
+                if canIndent currentZipper then
                     let
-                        currentNode' =
-                            removeCurrentAndGoUp currentNode
+                        currentZipperUndoList' =
+                            removeCurrentAndGoUp currentZipper
                                 `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
-                                `Maybe.andThen` MultiwayTreeZipper.appendChild (fst currentNode)
+                                `Maybe.andThen` MultiwayTreeZipper.appendChild (fst currentZipper)
                                 `Maybe.andThen` MultiwayTreeZipper.goToRightMostChild
                                 |> justOrCrash "IndentCurrentNode"
-                                |> (\state -> UndoList.new state model.currentNode)
+                                |> (\state -> UndoList.new state model.currentZipperUndoList)
                     in
-                        ( { model | currentNode = currentNode' }
+                        ( { model | currentZipperUndoList = currentZipperUndoList' }
                         , performBlind (Dom.focus selectedNodeId)
                         )
                 else
@@ -638,16 +638,16 @@ update msg model =
                     ( model, Cmd.none )
 
         updateDedentCurrentNode () =
-            if canDedent currentNode then
+            if canDedent currentZipper then
                 let
-                    currentNode' =
-                        removeCurrentAndGoUp currentNode
-                            `Maybe.andThen` insertSiblingBelow (fst currentNode)
+                    currentZipperUndoList' =
+                        removeCurrentAndGoUp currentZipper
+                            `Maybe.andThen` insertSiblingBelow (fst currentZipper)
                             `Maybe.andThen` goToNextSibling
                             |> justOrCrash "DedentCurrentNode"
-                            |> (\state -> UndoList.new state model.currentNode)
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
                 in
-                    ( { model | currentNode = currentNode' }
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
                     , performBlind (Dom.focus selectedNodeId)
                     )
             else
@@ -655,28 +655,28 @@ update msg model =
                 ( model, Cmd.none )
 
         updateRemoveCurrentNode () =
-            if canRemove currentNode then
+            if canRemove currentZipper then
                 let
-                    currentNode' =
-                        removeCurrentAndGoUp currentNode
+                    currentZipperUndoList' =
+                        removeCurrentAndGoUp currentZipper
                             `Maybe.andThen`
                                 (\parent ->
                                     if hasChildren parent then
-                                        if isLastSibling currentNode then
+                                        if isLastSibling currentZipper then
                                             MultiwayTreeZipper.goToRightMostChild parent
                                         else
                                             let
                                                 index =
-                                                    findIndexInSiblings currentNode
+                                                    findIndexInSiblings currentZipper
                                             in
                                                 MultiwayTreeZipper.goToChild index parent
                                     else
                                         Just parent
                                 )
                             |> justOrCrash "RemoveCurrentNode"
-                            |> (\state -> UndoList.new state model.currentNode)
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
                 in
-                    ( { model | currentNode = currentNode' }
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
                     , performBlind (Dom.focus selectedNodeId)
                     )
             else
@@ -684,19 +684,19 @@ update msg model =
 
         updateUndo () =
             let
-                currentNode' =
-                    UndoList.undo model.currentNode
+                currentZipperUndoList' =
+                    UndoList.undo model.currentZipperUndoList
             in
-                ( { model | currentNode = currentNode' }
+                ( { model | currentZipperUndoList = currentZipperUndoList' }
                 , performBlind (Dom.focus selectedNodeId)
                 )
 
         updateRedo () =
             let
-                currentNode' =
-                    UndoList.redo model.currentNode
+                currentZipperUndoList' =
+                    UndoList.redo model.currentZipperUndoList
             in
-                ( { model | currentNode = currentNode' }
+                ( { model | currentZipperUndoList = currentZipperUndoList' }
                 , performBlind (Dom.focus selectedNodeId)
                 )
     in
@@ -706,41 +706,41 @@ update msg model =
 
             FocusNode zipper ->
                 let
-                    currentNode' =
-                        UndoList.mapPresent (always zipper) model.currentNode
+                    currentZipperUndoList' =
+                        UndoList.mapPresent (always zipper) model.currentZipperUndoList
                 in
-                    ( { model | currentNode = currentNode' }
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
                     , performBlind (Dom.focus selectedNodeId)
                     )
 
             KeyDown keyCode ->
                 if keyCode == alt then
-                    ( { model | isAltPressed = True }, Cmd.none )
+                    ( { model | isAltDown = True }, Cmd.none )
                 else if keyCode == ctrl then
-                    ( { model | isCtrlPressed = True }, Cmd.none )
+                    ( { model | isCtrlDown = True }, Cmd.none )
                 else if keyCode == shift then
-                    ( { model | isShiftPressed = True }, Cmd.none )
+                    ( { model | isShiftDown = True }, Cmd.none )
                 else if keyCode == up then
-                    if model.isAltPressed then
+                    if model.isAltDown then
                         updateMoveCurrentNodeUp ()
                     else
                         updateSelectPreviousNode ()
                 else if keyCode == down then
-                    if model.isAltPressed then
+                    if model.isAltDown then
                         updateMoveCurrentNodeDown ()
                     else
                         updateSelectNextNode ()
                 else if keyCode == enter then
                     updateInsertNodeBelow ()
                 else if keyCode == tab then
-                    if model.isShiftPressed then
+                    if model.isShiftDown then
                         updateDedentCurrentNode ()
                     else
                         updateIndentCurrentNode ()
-                else if Char.fromCode keyCode == 'K' && model.isCtrlPressed && model.isShiftPressed then
+                else if Char.fromCode keyCode == 'K' && model.isCtrlDown && model.isShiftDown then
                     updateRemoveCurrentNode ()
-                else if Char.fromCode keyCode == 'Z' && model.isCtrlPressed then
-                    if model.isShiftPressed then
+                else if Char.fromCode keyCode == 'Z' && model.isCtrlDown then
+                    if model.isShiftDown then
                         updateRedo ()
                     else
                         updateUndo ()
@@ -749,24 +749,24 @@ update msg model =
 
             KeyUp keyCode ->
                 if keyCode == alt then
-                    ( { model | isAltPressed = False }, Cmd.none )
+                    ( { model | isAltDown = False }, Cmd.none )
                 else if keyCode == ctrl then
-                    ( { model | isCtrlPressed = False }, Cmd.none )
+                    ( { model | isCtrlDown = False }, Cmd.none )
                 else if keyCode == shift then
-                    ( { model | isShiftPressed = False }, Cmd.none )
+                    ( { model | isShiftDown = False }, Cmd.none )
                 else
                     ( model, Cmd.none )
 
             SetText text ->
                 let
-                    currentNode' =
+                    currentZipperUndoList' =
                         MultiwayTreeZipper.updateDatum
                             (\datum -> { datum | text = text })
-                            currentNode
+                            currentZipper
                             |> justOrCrash "SetText"
-                            |> (\state -> UndoList.new state model.currentNode)
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
                 in
-                    ( { model | currentNode = currentNode' }, Cmd.none )
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }, Cmd.none )
 
             SelectPreviousNode ->
                 updateSelectPreviousNode ()
@@ -793,25 +793,25 @@ update msg model =
                 updateRemoveCurrentNode ()
 
             RemoveCurrentNodeFromBackspace ->
-                if canRemove currentNode then
+                if canRemove currentZipper then
                     let
-                        currentNode' =
-                            removeCurrentAndGoUp currentNode
+                        currentZipperUndoList' =
+                            removeCurrentAndGoUp currentZipper
                                 `Maybe.andThen`
                                     (\parent ->
                                         if hasChildren parent then
                                             let
                                                 index =
-                                                    findIndexInSiblings currentNode
+                                                    findIndexInSiblings currentZipper
                                             in
                                                 MultiwayTreeZipper.goToChild (max 0 (index - 1)) parent
                                         else
                                             Just parent
                                     )
                                 |> justOrCrash "RemoveCurrentNodeFromBackspace"
-                                |> (\state -> UndoList.new state model.currentNode)
+                                |> (\state -> UndoList.new state model.currentZipperUndoList)
                     in
-                        ( { model | currentNode = currentNode' }
+                        ( { model | currentZipperUndoList = currentZipperUndoList' }
                         , performBlind (Dom.focus selectedNodeId)
                         )
                 else
@@ -850,11 +850,11 @@ view model =
 viewTree : Model -> Html Msg
 viewTree model =
     let
-        currentNode =
-            model.currentNode.present
+        currentZipper =
+            model.currentZipperUndoList.present
 
         tree =
-            getTreeRootFromZipper currentNode
+            getTreeRootFromZipper currentZipper
 
         onKeyDown : (Int -> msg) -> Attribute msg
         onKeyDown tagger =
@@ -873,7 +873,7 @@ viewTree model =
                 model
                 (MultiwayTree.children tree)
                 (initialZipper tree)
-                currentNode
+                currentZipper
             ]
 
 
@@ -901,7 +901,7 @@ viewTreeNode model node zipper currentNode =
                                 filterKey keyCode =
                                     if
                                         List.member keyCode [ enter, up, down, tab ]
-                                            || (Char.fromCode keyCode == 'Z' && model.isCtrlPressed)
+                                            || (Char.fromCode keyCode == 'Z' && model.isCtrlDown)
                                             || (keyCode == backspace && String.isEmpty datum.text)
                                     then
                                         Ok keyCode
@@ -1098,23 +1098,23 @@ type ToolbarItem
 viewToolbar : Model -> Html Msg
 viewToolbar model =
     let
-        currentNode =
-            model.currentNode.present
+        currentZipper =
+            model.currentZipperUndoList.present
 
         actions =
-            [ Action ( '↑', "Up", "Select the previous node", SelectPreviousNode, canGoToPrevious currentNode )
-            , Action ( '↓', "Down", "Select the next node", SelectNextNode, canGoToNext currentNode )
+            [ Action ( '↑', "Up", "Select the previous node", SelectPreviousNode, canGoToPrevious currentZipper )
+            , Action ( '↓', "Down", "Select the next node", SelectNextNode, canGoToNext currentZipper )
             , Separator
-            , Action ( '↥', "Alt-Up", "Move the selected node upwards", MoveCurrentNodeUp, canMoveUp currentNode )
-            , Action ( '↧', "Alt-Down", "Move the selected node downwards", MoveCurrentNodeDown, canMoveDown currentNode )
-            , Action ( '↤', "Shift-Tab", "Dedent the selected node", DedentCurrentNode, canDedent currentNode )
-            , Action ( '↦', "Tab", "Indent the selected node", IndentCurrentNode, canIndent currentNode )
+            , Action ( '↥', "Alt-Up", "Move the selected node upwards", MoveCurrentNodeUp, canMoveUp currentZipper )
+            , Action ( '↧', "Alt-Down", "Move the selected node downwards", MoveCurrentNodeDown, canMoveDown currentZipper )
+            , Action ( '↤', "Shift-Tab", "Dedent the selected node", DedentCurrentNode, canDedent currentZipper )
+            , Action ( '↦', "Tab", "Indent the selected node", IndentCurrentNode, canIndent currentZipper )
             , Separator
             , Action ( '↳', "Enter", "Insert a node below", InsertNodeBelow, True )
-            , Action ( '✗', "Ctrl-Shift-K", "Remove the selected node", RemoveCurrentNode, canRemove currentNode )
+            , Action ( '✗', "Ctrl-Shift-K", "Remove the selected node", RemoveCurrentNode, canRemove currentZipper )
             , Separator
-            , Action ( '<', "Ctrl-Z", "Undo", Undo, UndoList.hasPast model.currentNode )
-            , Action ( '>', "Ctrl-Shift-Z", "Redo", Redo, UndoList.hasFuture model.currentNode )
+            , Action ( '<', "Ctrl-Z", "Undo", Undo, UndoList.hasPast model.currentZipperUndoList )
+            , Action ( '>', "Ctrl-Shift-Z", "Redo", Redo, UndoList.hasFuture model.currentZipperUndoList )
             ]
     in
         p [] (List.map viewToolbarItem actions)
@@ -1154,7 +1154,7 @@ updateWithStorage msg model =
             update msg model
 
         tree =
-            getTreeRootFromZipper newModel.currentNode.present
+            getTreeRootFromZipper newModel.currentZipperUndoList.present
     in
         ( newModel
         , Cmd.batch [ setStorage (serialize tree), cmds ]
