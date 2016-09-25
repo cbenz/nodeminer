@@ -818,7 +818,15 @@ update msg model =
                     ( model, Cmd.none )
 
             ResetToSampleTree ->
-                init Nothing
+                let
+                    currentZipperUndoList' =
+                        MultiwayTreeZipper.goToChild 0 (initialZipper sampleTree)
+                            |> justOrCrash "ResetToSampleTree"
+                            |> (\state -> UndoList.new state model.currentZipperUndoList)
+                in
+                    ( { model | currentZipperUndoList = currentZipperUndoList' }
+                    , performBlind (Dom.focus selectedNodeId)
+                    )
 
             Undo ->
                 updateUndo ()
