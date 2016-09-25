@@ -836,7 +836,7 @@ view model =
     div []
         [ h1 [] [ text "NoteMiner" ]
         , viewToolbar model
-        , viewTree model.currentNode.present
+        , viewTree model
         , hr [] []
         , button [ onClick ResetToSampleTree ] [ text "Reset to sample tree" ]
         , p []
@@ -847,9 +847,12 @@ view model =
         ]
 
 
-viewTree : Zipper -> Html Msg
-viewTree currentNode =
+viewTree : Model -> Html Msg
+viewTree model =
     let
+        currentNode =
+            model.currentNode.present
+
         tree =
             getTreeRootFromZipper currentNode
 
@@ -867,14 +870,15 @@ viewTree currentNode =
             , style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ]
             ]
             [ viewForest
+                model
                 (MultiwayTree.children tree)
                 (initialZipper tree)
                 currentNode
             ]
 
 
-viewTreeNode : Tree -> Zipper -> Zipper -> List (Html Msg)
-viewTreeNode node zipper currentNode =
+viewTreeNode : Model -> Tree -> Zipper -> Zipper -> List (Html Msg)
+viewTreeNode model node zipper currentNode =
     let
         datum =
             MultiwayTree.datum node
@@ -897,7 +901,7 @@ viewTreeNode node zipper currentNode =
                                 filterKey keyCode =
                                     if
                                         List.member keyCode [ enter, up, down, tab ]
-                                            || (Char.fromCode keyCode == 'Z')
+                                            || (Char.fromCode keyCode == 'Z' && model.isCtrlPressed)
                                             || (keyCode == backspace && String.isEmpty datum.text)
                                     then
                                         Ok keyCode
@@ -959,11 +963,11 @@ viewTreeNode node zipper currentNode =
         if List.isEmpty nodeChildren then
             [ liHtml ]
         else
-            [ liHtml, viewForest nodeChildren zipper currentNode ]
+            [ liHtml, viewForest model nodeChildren zipper currentNode ]
 
 
-viewForest : Forest -> Zipper -> Zipper -> Html Msg
-viewForest forest zipper currentNode =
+viewForest : Model -> Forest -> Zipper -> Zipper -> Html Msg
+viewForest model forest zipper currentNode =
     ul []
         (List.indexedMap
             (\index node ->
@@ -972,7 +976,7 @@ viewForest forest zipper currentNode =
                         MultiwayTreeZipper.goToChild index zipper
                             |> justOrCrash "viewForest"
                 in
-                    viewTreeNode node zipper' currentNode
+                    viewTreeNode model node zipper' currentNode
             )
             forest
             |> List.concat
