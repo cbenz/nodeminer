@@ -38,6 +38,12 @@ type alias KeyCode =
     Int
 
 
+type ModifierKey
+    = Ctrl
+    | Alt
+    | Shift
+
+
 backspace : KeyCode
 backspace =
     8
@@ -500,9 +506,11 @@ init serializedTree =
 
 type Msg
     = NoOp
+    | ChangeModifierKey ModifierKey Bool
+    | Undo
+    | Redo
+    | ResetToSampleTree
     | SelectNode NodeId
-    | KeyDown KeyCode
-    | KeyUp KeyCode
     | SetText String
     | SelectPreviousNode
     | SelectNextNode
@@ -513,9 +521,6 @@ type Msg
     | DedentCurrentNode
     | MoveCurrentNodeUp
     | MoveCurrentNodeDown
-    | ResetToSampleTree
-    | Undo
-    | Redo
     | SetSearchText String
 
 
@@ -527,275 +532,26 @@ update msg model =
 
         selectedNodeZipper =
             getSelectedNodeZipper model
-
-        updateMoveCurrentNodeUp () =
-            if canMoveUp selectedNodeZipper then
-                let
-                    index =
-                        findIndexInSiblings selectedNodeZipper
-
-                    index' =
-                        index - 1
-
-                    treeUndoList' =
-                        removeCurrentAndGoUp selectedNodeZipper
-                            `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
-                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                            |> justOrCrash "updateMoveCurrentNodeUp"
-                            |> fst
-                            |> \tree -> UndoList.new tree model.treeUndoList
-                in
-                    ( { model | treeUndoList = treeUndoList' }
-                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                    )
-            else
-                ( model, Cmd.none )
-
-        updateMoveCurrentNodeDown () =
-            if canMoveDown selectedNodeZipper then
-                let
-                    index =
-                        findIndexInSiblings selectedNodeZipper
-
-                    index' =
-                        index + 1
-
-                    treeUndoList' =
-                        removeCurrentAndGoUp selectedNodeZipper
-                            `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
-                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                            |> justOrCrash "updateMoveCurrentNodeDown"
-                            |> fst
-                            |> \tree -> UndoList.new tree model.treeUndoList
-                in
-                    ( { model | treeUndoList = treeUndoList' }
-                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                    )
-            else
-                ( model, Cmd.none )
-
-        updateSelectPreviousNode () =
-            let
-                selectedNodeId' =
-                    (if canGoToPrevious selectedNodeZipper then
-                        MultiwayTreeZipper.goToPrevious selectedNodeZipper
-                            |> justOrCrash "updateSelectPreviousNode"
-                     else
-                        selectedNodeZipper
-                    )
-                        |> MultiwayTreeZipper.datum
-                        |> .id
-            in
-                ( { model | selectedNodeId = selectedNodeId' }
-                , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                )
-
-        updateSelectNextNode () =
-            let
-                selectedNodeId' =
-                    (if canGoToNext selectedNodeZipper then
-                        MultiwayTreeZipper.goToNext selectedNodeZipper
-                            |> justOrCrash "updateSelectNextNode"
-                     else
-                        selectedNodeZipper
-                    )
-                        |> MultiwayTreeZipper.datum
-                        |> .id
-            in
-                ( { model | selectedNodeId = selectedNodeId' }
-                , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                )
-
-        updateInsertNodeBelow () =
-            let
-                newNode =
-                    nextNode tree
-
-                selectedNodeZipper' =
-                    if hasChildren selectedNodeZipper then
-                        MultiwayTreeZipper.insertChild newNode selectedNodeZipper
-                    else
-                        insertSiblingBelow newNode selectedNodeZipper
-
-                treeUndoList' =
-                    selectedNodeZipper'
-                        `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                        |> justOrCrash "updateInsertNodeBelow: treeUndoList'"
-                        |> fst
-                        |> \tree -> UndoList.new tree model.treeUndoList
-
-                selectedNodeId' =
-                    selectedNodeZipper'
-                        `Maybe.andThen`
-                            (if hasChildren selectedNodeZipper then
-                                MultiwayTreeZipper.goToChild 0
-                             else
-                                MultiwayTreeZipper.goToNext
-                            )
-                        |> justOrCrash "updateInsertNodeBelow: selectedNodeId'"
-                        |> MultiwayTreeZipper.datum
-                        |> .id
-            in
-                ( { model
-                    | treeUndoList = treeUndoList'
-                    , selectedNodeId = selectedNodeId'
-                  }
-                , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                )
-
-        updateIndentCurrentNode () =
-            let
-                index =
-                    findIndexInSiblings selectedNodeZipper
-            in
-                if canIndent selectedNodeZipper then
-                    let
-                        treeUndoList' =
-                            removeCurrentAndGoUp selectedNodeZipper
-                                `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
-                                `Maybe.andThen` MultiwayTreeZipper.appendChild (fst selectedNodeZipper)
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                                |> justOrCrash "updateIndentCurrentNode"
-                                |> fst
-                                |> \tree -> UndoList.new tree model.treeUndoList
-                    in
-                        ( { model | treeUndoList = treeUndoList' }
-                        , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                        )
-                else
-                    -- To be indented the node must have at least a previous sibling.
-                    ( model, Cmd.none )
-
-        updateDedentCurrentNode () =
-            if canDedent selectedNodeZipper then
-                let
-                    treeUndoList' =
-                        removeCurrentAndGoUp selectedNodeZipper
-                            `Maybe.andThen` insertSiblingBelow (fst selectedNodeZipper)
-                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                            |> justOrCrash "updateDedentCurrentNode"
-                            |> fst
-                            |> \tree -> UndoList.new tree model.treeUndoList
-                in
-                    ( { model | treeUndoList = treeUndoList' }
-                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                    )
-            else
-                -- To be dedented the node must have a depth > 1.
-                ( model, Cmd.none )
-
-        updateRemoveCurrentNode () =
-            if canRemove selectedNodeZipper then
-                let
-                    selectedNodeZipper' =
-                        removeCurrentAndGoUp selectedNodeZipper
-
-                    treeUndoList' =
-                        selectedNodeZipper'
-                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
-                            |> justOrCrash "updateRemoveCurrentNode: treeUndoList'"
-                            |> fst
-                            |> \tree -> UndoList.new tree model.treeUndoList
-
-                    selectedNodeId' =
-                        selectedNodeZipper'
-                            `Maybe.andThen`
-                                (\parent ->
-                                    if hasChildren parent then
-                                        if isLastSibling selectedNodeZipper then
-                                            MultiwayTreeZipper.goToRightMostChild parent
-                                        else
-                                            let
-                                                index =
-                                                    findIndexInSiblings selectedNodeZipper
-                                            in
-                                                MultiwayTreeZipper.goToChild index parent
-                                    else
-                                        Just parent
-                                )
-                            |> justOrCrash "updateRemoveCurrentNode: selectedNodeId'"
-                            |> MultiwayTreeZipper.datum
-                            |> .id
-                in
-                    ( { model
-                        | treeUndoList = treeUndoList'
-                        , selectedNodeId = selectedNodeId'
-                      }
-                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                    )
-            else
-                ( model, Cmd.none )
-
-        updateUndo () =
-            let
-                treeUndoList' =
-                    UndoList.undo model.treeUndoList
-            in
-                ( { model | treeUndoList = treeUndoList' }
-                , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                )
-
-        updateRedo () =
-            let
-                treeUndoList' =
-                    UndoList.redo model.treeUndoList
-            in
-                ( { model | treeUndoList = treeUndoList' }
-                , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
-                )
     in
         case msg of
             NoOp ->
                 ( model, Cmd.none )
 
+            ChangeModifierKey modifierKey isPressed ->
+                case modifierKey of
+                    Alt ->
+                        ( { model | isAltDown = isPressed }, Cmd.none )
+
+                    Ctrl ->
+                        ( { model | isCtrlDown = isPressed }, Cmd.none )
+
+                    Shift ->
+                        ( { model | isShiftDown = isPressed }, Cmd.none )
+
             SelectNode nodeId ->
                 ( { model | selectedNodeId = nodeId }
                 , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                 )
-
-            KeyDown keyCode ->
-                if keyCode == alt then
-                    ( { model | isAltDown = True }, Cmd.none )
-                else if keyCode == ctrl then
-                    ( { model | isCtrlDown = True }, Cmd.none )
-                else if keyCode == shift then
-                    ( { model | isShiftDown = True }, Cmd.none )
-                else if keyCode == up then
-                    if model.isAltDown then
-                        updateMoveCurrentNodeUp ()
-                    else
-                        updateSelectPreviousNode ()
-                else if keyCode == down then
-                    if model.isAltDown then
-                        updateMoveCurrentNodeDown ()
-                    else
-                        updateSelectNextNode ()
-                else if keyCode == enter then
-                    updateInsertNodeBelow ()
-                else if keyCode == tab then
-                    if model.isShiftDown then
-                        updateDedentCurrentNode ()
-                    else
-                        updateIndentCurrentNode ()
-                else if Char.fromCode keyCode == 'K' && model.isCtrlDown && model.isShiftDown then
-                    updateRemoveCurrentNode ()
-                else if Char.fromCode keyCode == 'Z' && model.isCtrlDown then
-                    if model.isShiftDown then
-                        updateRedo ()
-                    else
-                        updateUndo ()
-                else
-                    ( model, Cmd.none )
-
-            KeyUp keyCode ->
-                if keyCode == alt then
-                    ( { model | isAltDown = False }, Cmd.none )
-                else if keyCode == ctrl then
-                    ( { model | isCtrlDown = False }, Cmd.none )
-                else if keyCode == shift then
-                    ( { model | isShiftDown = False }, Cmd.none )
-                else
-                    ( model, Cmd.none )
 
             SetText text ->
                 let
@@ -817,28 +573,202 @@ update msg model =
                     )
 
             SelectPreviousNode ->
-                updateSelectPreviousNode ()
+                let
+                    selectedNodeId' =
+                        (if canGoToPrevious selectedNodeZipper then
+                            MultiwayTreeZipper.goToPrevious selectedNodeZipper
+                                |> justOrCrash "updateSelectPreviousNode"
+                         else
+                            selectedNodeZipper
+                        )
+                            |> MultiwayTreeZipper.datum
+                            |> .id
+                in
+                    ( { model | selectedNodeId = selectedNodeId' }
+                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    )
 
             SelectNextNode ->
-                updateSelectNextNode ()
+                let
+                    selectedNodeId' =
+                        (if canGoToNext selectedNodeZipper then
+                            MultiwayTreeZipper.goToNext selectedNodeZipper
+                                |> justOrCrash "updateSelectNextNode"
+                         else
+                            selectedNodeZipper
+                        )
+                            |> MultiwayTreeZipper.datum
+                            |> .id
+                in
+                    ( { model | selectedNodeId = selectedNodeId' }
+                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    )
 
             InsertNodeBelow ->
-                updateInsertNodeBelow ()
+                let
+                    newNode =
+                        nextNode tree
+
+                    selectedNodeZipper' =
+                        if hasChildren selectedNodeZipper then
+                            MultiwayTreeZipper.insertChild newNode selectedNodeZipper
+                        else
+                            insertSiblingBelow newNode selectedNodeZipper
+
+                    treeUndoList' =
+                        selectedNodeZipper'
+                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                            |> justOrCrash "updateInsertNodeBelow: treeUndoList'"
+                            |> fst
+                            |> \tree -> UndoList.new tree model.treeUndoList
+
+                    selectedNodeId' =
+                        selectedNodeZipper'
+                            `Maybe.andThen`
+                                (if hasChildren selectedNodeZipper then
+                                    MultiwayTreeZipper.goToChild 0
+                                 else
+                                    MultiwayTreeZipper.goToNext
+                                )
+                            |> justOrCrash "updateInsertNodeBelow: selectedNodeId'"
+                            |> MultiwayTreeZipper.datum
+                            |> .id
+                in
+                    ( { model
+                        | treeUndoList = treeUndoList'
+                        , selectedNodeId = selectedNodeId'
+                      }
+                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    )
 
             IndentCurrentNode ->
-                updateIndentCurrentNode ()
+                let
+                    index =
+                        findIndexInSiblings selectedNodeZipper
+                in
+                    if canIndent selectedNodeZipper then
+                        let
+                            treeUndoList' =
+                                removeCurrentAndGoUp selectedNodeZipper
+                                    `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
+                                    `Maybe.andThen` MultiwayTreeZipper.appendChild (fst selectedNodeZipper)
+                                    `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                    |> justOrCrash "updateIndentCurrentNode"
+                                    |> fst
+                                    |> \tree -> UndoList.new tree model.treeUndoList
+                        in
+                            ( { model | treeUndoList = treeUndoList' }
+                            , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                            )
+                    else
+                        -- To be indented the node must have at least a previous sibling.
+                        ( model, Cmd.none )
 
             DedentCurrentNode ->
-                updateDedentCurrentNode ()
+                if canDedent selectedNodeZipper then
+                    let
+                        treeUndoList' =
+                            removeCurrentAndGoUp selectedNodeZipper
+                                `Maybe.andThen` insertSiblingBelow (fst selectedNodeZipper)
+                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> justOrCrash "updateDedentCurrentNode"
+                                |> fst
+                                |> \tree -> UndoList.new tree model.treeUndoList
+                    in
+                        ( { model | treeUndoList = treeUndoList' }
+                        , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        )
+                else
+                    -- To be dedented the node must have a depth > 1.
+                    ( model, Cmd.none )
 
             MoveCurrentNodeUp ->
-                updateMoveCurrentNodeUp ()
+                if canMoveUp selectedNodeZipper then
+                    let
+                        index =
+                            findIndexInSiblings selectedNodeZipper
+
+                        index' =
+                            index - 1
+
+                        treeUndoList' =
+                            removeCurrentAndGoUp selectedNodeZipper
+                                `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
+                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> justOrCrash "updateMoveCurrentNodeUp"
+                                |> fst
+                                |> \tree -> UndoList.new tree model.treeUndoList
+                    in
+                        ( { model | treeUndoList = treeUndoList' }
+                        , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        )
+                else
+                    ( model, Cmd.none )
 
             MoveCurrentNodeDown ->
-                updateMoveCurrentNodeDown ()
+                if canMoveDown selectedNodeZipper then
+                    let
+                        index =
+                            findIndexInSiblings selectedNodeZipper
+
+                        index' =
+                            index + 1
+
+                        treeUndoList' =
+                            removeCurrentAndGoUp selectedNodeZipper
+                                `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
+                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> justOrCrash "updateMoveCurrentNodeDown"
+                                |> fst
+                                |> \tree -> UndoList.new tree model.treeUndoList
+                    in
+                        ( { model | treeUndoList = treeUndoList' }
+                        , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        )
+                else
+                    ( model, Cmd.none )
 
             RemoveCurrentNode ->
-                updateRemoveCurrentNode ()
+                if canRemove selectedNodeZipper then
+                    let
+                        selectedNodeZipper' =
+                            removeCurrentAndGoUp selectedNodeZipper
+
+                        treeUndoList' =
+                            selectedNodeZipper'
+                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> justOrCrash "updateRemoveCurrentNode: treeUndoList'"
+                                |> fst
+                                |> \tree -> UndoList.new tree model.treeUndoList
+
+                        selectedNodeId' =
+                            selectedNodeZipper'
+                                `Maybe.andThen`
+                                    (\parent ->
+                                        if hasChildren parent then
+                                            if isLastSibling selectedNodeZipper then
+                                                MultiwayTreeZipper.goToRightMostChild parent
+                                            else
+                                                let
+                                                    index =
+                                                        findIndexInSiblings selectedNodeZipper
+                                                in
+                                                    MultiwayTreeZipper.goToChild index parent
+                                        else
+                                            Just parent
+                                    )
+                                |> justOrCrash "updateRemoveCurrentNode: selectedNodeId'"
+                                |> MultiwayTreeZipper.datum
+                                |> .id
+                    in
+                        ( { model
+                            | treeUndoList = treeUndoList'
+                            , selectedNodeId = selectedNodeId'
+                          }
+                        , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        )
+                else
+                    ( model, Cmd.none )
 
             RemoveCurrentNodeFromBackspace ->
                 if canRemove selectedNodeZipper then
@@ -892,10 +822,22 @@ update msg model =
                     )
 
             Undo ->
-                updateUndo ()
+                let
+                    treeUndoList' =
+                        UndoList.undo model.treeUndoList
+                in
+                    ( { model | treeUndoList = treeUndoList' }
+                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    )
 
             Redo ->
-                updateRedo ()
+                let
+                    treeUndoList' =
+                        UndoList.redo model.treeUndoList
+                in
+                    ( { model | treeUndoList = treeUndoList' }
+                    , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    )
 
             SetSearchText text ->
                 ( { model | searchText = text }, Cmd.none )
@@ -910,7 +852,14 @@ view model =
     div []
         [ h1 [] [ text "NoteMiner" ]
         , p [] (viewToolbarItems model ++ [ separatorSpan, viewSearchInput ])
-        , viewTree model
+        , div
+            [ style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ]
+            ]
+            [ if String.isEmpty model.searchText then
+                viewTree model
+              else
+                viewSearchResults model
+            ]
         , hr [] []
         , button [ onClick ResetToSampleTree ] [ text "Reset to sample tree" ]
         , p []
@@ -923,55 +872,9 @@ view model =
 
 viewTree : Model -> Html Msg
 viewTree model =
-    let
-        selectedNodeZipper =
-            getSelectedNodeZipper model
-
-        tree =
-            model.treeUndoList.present
-
-        foldedTree =
-            if String.isEmpty model.searchText then
-                initialZipper tree
-            else
-                let
-                    emptyTree =
-                        MultiwayTree.Tree (MultiwayTree.datum tree) []
-
-                    emptyTreeZipper =
-                        initialZipper emptyTree
-                in
-                    MultiwayTree.foldr
-                        (\datum accuZipper ->
-                            if
-                                Regex.contains
-                                    (Regex.regex model.searchText |> Regex.caseInsensitive)
-                                    datum.text
-                            then
-                                MultiwayTreeZipper.appendChild
-                                    (MultiwayTree.Tree datum [])
-                                    accuZipper
-                                    |> justOrCrash "viewTree"
-                            else
-                                accuZipper
-                        )
-                        emptyTreeZipper
-                        tree
-
-        onKeyDown : (Int -> msg) -> Attribute msg
-        onKeyDown tagger =
-            on "keydown" (Decode.map tagger Html.Events.keyCode)
-
-        onKeyUp : (Int -> msg) -> Attribute msg
-        onKeyUp tagger =
-            on "keyup" (Decode.map tagger Html.Events.keyCode)
-    in
-        div
-            [ onKeyDown KeyDown
-            , onKeyUp KeyUp
-            , style [ ( "font-family", "sans-serif" ), ( "font-size", "1em" ) ]
-            ]
-            [ viewTreeNodeChildren model foldedTree ]
+    div
+        []
+        [ viewTreeNodeChildren model (initialZipper model.treeUndoList.present) ]
 
 
 viewTreeNode : Model -> Zipper -> List (Html Msg)
@@ -983,81 +886,13 @@ viewTreeNode model accuZipper =
         datum =
             MultiwayTree.datum node
 
-        selectedNodeZipper =
-            getSelectedNodeZipper model
-
         liHtml =
             li
                 []
-                [ let
-                    isSelectedNodeZipper zipper =
-                        MultiwayTreeZipper.datum zipper == MultiwayTreeZipper.datum selectedNodeZipper
-                  in
-                    if isSelectedNodeZipper accuZipper then
-                        input
-                            [ id selectedNodeIdHtmlAttribute
-                            , value datum.text
-                            , let
-                                eventOptions =
-                                    { preventDefault = True, stopPropagation = False }
-
-                                filterKey keyCode =
-                                    if
-                                        List.member keyCode [ enter, up, down, tab ]
-                                            || (Char.fromCode keyCode == 'Z' && model.isCtrlDown)
-                                            || (keyCode == backspace && String.isEmpty datum.text)
-                                    then
-                                        Ok keyCode
-                                    else
-                                        Err "Will be handled by input event"
-
-                                decoder =
-                                    Decode.customDecoder Html.Events.keyCode filterKey
-                                        |> Decode.map
-                                            (\keyCode ->
-                                                if keyCode == backspace then
-                                                    RemoveCurrentNodeFromBackspace
-                                                else
-                                                    NoOp
-                                            )
-                              in
-                                onWithOptions "keydown" eventOptions decoder
-                            , onInput SetText
-                            , style
-                                [ ( "border", "none" )
-                                , ( "background-color", "lightblue" )
-                                , ( "font-size", "1em" )
-                                , ( "width", "100%" )
-                                ]
-                            ]
-                            []
-                    else
-                        div
-                            [ onClick (SelectNode datum.id)
-                            , style
-                                [ -- Compensate input element border
-                                  ( "padding", "1px 0" )
-                                , ( "white-space", "pre-wrap" )
-                                ]
-                            ]
-                            (let
-                                -- From http://stackoverflow.com/questions/280712/javascript-unicode-regexes
-                                unicodeCharacter =
-                                    "[\\u00BF-\\u1FFF\\u2C00-\\uD7FF\\w]"
-                             in
-                                (fragments
-                                    datum.text
-                                    [ ( Regex.regex ("#" ++ unicodeCharacter ++ "+"), Tag )
-                                    , ( Regex.regex ("@" ++ unicodeCharacter ++ "+"), Contact )
-                                    , ( -- From Form.Validate
-                                        Regex.regex "(https?://)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\w \\.-]*)*/?"
-                                            |> Regex.caseInsensitive
-                                      , Url
-                                      )
-                                    ]
-                                )
-                                    |> List.map viewFragment
-                            )
+                [ if datum.id == model.selectedNodeId then
+                    viewSelectedTreeNode model datum
+                  else
+                    viewUnselectedTreeNode datum
                 ]
 
         nodeChildren =
@@ -1067,6 +902,123 @@ viewTreeNode model accuZipper =
             [ liHtml ]
         else
             [ liHtml, viewTreeNodeChildren model accuZipper ]
+
+
+viewSelectedTreeNode : Model -> Datum -> Html Msg
+viewSelectedTreeNode model datum =
+    input
+        [ id selectedNodeIdHtmlAttribute
+        , value datum.text
+        , let
+            eventOptions =
+                { preventDefault = True, stopPropagation = False }
+
+            filterKey keyCode =
+                if
+                    List.member keyCode [ enter, up, down, tab, ctrl, alt, shift ]
+                        || (model.isCtrlDown && Char.fromCode keyCode == 'Z')
+                        || (keyCode == backspace && String.isEmpty datum.text)
+                then
+                    Ok keyCode
+                else
+                    Err "Will be handled by input event"
+
+            decoder =
+                Decode.customDecoder Html.Events.keyCode filterKey
+                    |> Decode.map
+                        (\keyCode ->
+                            if keyCode == backspace then
+                                RemoveCurrentNodeFromBackspace
+                            else if keyCode == up then
+                                if model.isAltDown then
+                                    MoveCurrentNodeUp
+                                else
+                                    SelectPreviousNode
+                            else if keyCode == down then
+                                if model.isAltDown then
+                                    MoveCurrentNodeDown
+                                else
+                                    SelectNextNode
+                            else if keyCode == enter then
+                                InsertNodeBelow
+                            else if keyCode == tab then
+                                if model.isShiftDown then
+                                    DedentCurrentNode
+                                else
+                                    IndentCurrentNode
+                            else if Char.fromCode keyCode == 'K' && model.isCtrlDown && model.isShiftDown then
+                                RemoveCurrentNode
+                            else if Char.fromCode keyCode == 'Z' && model.isCtrlDown then
+                                if model.isShiftDown then
+                                    Redo
+                                else
+                                    Undo
+                            else if keyCode == alt then
+                                ChangeModifierKey Alt True
+                            else if keyCode == ctrl then
+                                ChangeModifierKey Ctrl True
+                            else if keyCode == shift then
+                                ChangeModifierKey Shift True
+                            else
+                                NoOp
+                        )
+          in
+            onWithOptions "keydown" eventOptions decoder
+        , let
+            decoder =
+                Decode.map
+                    (\keyCode ->
+                        if keyCode == alt then
+                            ChangeModifierKey Alt False
+                        else if keyCode == ctrl then
+                            ChangeModifierKey Ctrl False
+                        else if keyCode == shift then
+                            ChangeModifierKey Shift False
+                        else
+                            NoOp
+                    )
+                    Html.Events.keyCode
+          in
+            on "keyup" decoder
+        , onInput SetText
+        , style
+            [ ( "border", "none" )
+            , ( "background-color", "lightblue" )
+            , ( "font-size", "1em" )
+            , ( "width", "100%" )
+            ]
+        ]
+        []
+
+
+viewUnselectedTreeNode : Datum -> Html Msg
+viewUnselectedTreeNode datum =
+    div
+        [ onClick (SelectNode datum.id)
+        , style
+            [ -- Compensate input element border
+              ( "padding", "1px 0" )
+            , ( "white-space", "pre-wrap" )
+            ]
+        ]
+        (let
+            -- From http://stackoverflow.com/questions/280712/javascript-unicode-regexes
+            unicodeCharacter =
+                "[\\u00BF-\\u1FFF\\u2C00-\\uD7FF\\w]"
+         in
+            (fragments
+                datum.text
+                [ ( Regex.regex ("#" ++ unicodeCharacter ++ "+"), Tag )
+                , ( Regex.regex ("@" ++ unicodeCharacter ++ "+"), Contact )
+                , ( -- From Form.Validate
+                    Regex.regex "(https?://)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\w \\.-]*)*/?"
+                        |> Regex.caseInsensitive
+                  , Url
+                  )
+                ]
+            )
+                |> List.map viewFragment
+        )
 
 
 viewTreeNodeChildren : Model -> Zipper -> Html Msg
@@ -1087,6 +1039,40 @@ viewTreeNodeChildren model accuZipper =
                 )
                 children
                 |> List.concat
+            )
+
+
+viewSearchResults : Model -> Html Msg
+viewSearchResults model =
+    let
+        datums =
+            MultiwayTree.foldl
+                (\datum accuList ->
+                    if
+                        Regex.contains
+                            (Regex.regex model.searchText |> Regex.caseInsensitive)
+                            datum.text
+                    then
+                        accuList ++ [ datum ]
+                    else
+                        accuList
+                )
+                []
+                model.treeUndoList.present
+    in
+        ul
+            []
+            (List.map
+                (\datum ->
+                    li
+                        []
+                        [ if datum.id == model.selectedNodeId then
+                            viewSelectedTreeNode model datum
+                          else
+                            viewUnselectedTreeNode datum
+                        ]
+                )
+                datums
             )
 
 
