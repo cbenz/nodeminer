@@ -9273,105 +9273,826 @@ var _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goTo = F2(
 			goToElementOrNext);
 	});
 
-var _user$project$Main$lazy = function (thunk) {
-	return A2(
-		_elm_lang$core$Json_Decode$customDecoder,
-		_elm_lang$core$Json_Decode$value,
-		function (rawValue) {
-			return A2(
-				_elm_lang$core$Json_Decode$decodeValue,
-				thunk(
-					{ctor: '_Tuple0'}),
-				rawValue);
-		});
-};
-var _user$project$Main$encodeDatum = function (datum) {
-	return _elm_lang$core$Json_Encode$object(
-		_elm_lang$core$Native_List.fromArray(
-			[
+var _user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute = 'selected-node';
+
+
+var _user$project$NoteMiner_Maybe$justOrCrash = F2(
+	function (msg, maybe) {
+		var _p0 = maybe;
+		if (_p0.ctor === 'Just') {
+			return _p0._0;
+		} else {
+			return _elm_lang$core$Native_Utils.crashCase(
+				'NoteMiner.Maybe',
 				{
-				ctor: '_Tuple2',
-				_0: 'text',
-				_1: _elm_lang$core$Json_Encode$string(datum.text)
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'id',
-				_1: _elm_lang$core$Json_Encode$int(datum.id)
-			}
-			]));
-};
-var _user$project$Main$encodeTreeNode = function (node) {
-	return _elm_lang$core$Json_Encode$object(
-		_elm_lang$core$Native_List.fromArray(
-			[
-				{
-				ctor: '_Tuple2',
-				_0: 'datum',
-				_1: _user$project$Main$encodeDatum(
-					_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(node))
-			},
-				{
-				ctor: '_Tuple2',
-				_0: 'children',
-				_1: _elm_lang$core$Json_Encode$list(
-					A2(
-						_elm_lang$core$List$map,
-						_user$project$Main$encodeTreeNode,
-						_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(node)))
-			}
-			]));
-};
-var _user$project$Main$serialize = function (tree) {
-	return A2(
-		_elm_lang$core$Json_Encode$encode,
-		0,
-		_user$project$Main$encodeTreeNode(tree));
-};
-var _user$project$Main$viewToolbarItem = function (item) {
-	var _p0 = item;
-	if (_p0.ctor === 'Action') {
+					start: {line: 6, column: 5},
+					end: {line: 11, column: 79}
+				},
+				_p0)(
+				A2(_elm_lang$core$Basics_ops['++'], msg, ': a value should never have been `Nothing`.'));
+		}
+	});
+
+var _user$project$NoteMiner_List$removeAtIndex = F2(
+	function (index, xs) {
+		var endSlice = A2(_elm_lang$core$List$drop, index + 1, xs);
+		var startSlice = A2(_elm_lang$core$List$take, index, xs);
+		return A2(_elm_lang$core$Basics_ops['++'], startSlice, endSlice);
+	});
+var _user$project$NoteMiner_List$insertAtIndex = F3(
+	function (x, index, xs) {
+		var endSlice = A2(_elm_lang$core$List$drop, index, xs);
+		var startSlice = A2(_elm_lang$core$List$take, index, xs);
 		return A2(
-			_elm_lang$html$Html$button,
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Events$onClick(_p0._0._3),
-					_elm_lang$html$Html_Attributes$disabled(
-					_elm_lang$core$Basics$not(_p0._0._4)),
-					_elm_lang$html$Html_Attributes$title(
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						_p0._0._1,
-						A2(_elm_lang$core$Basics_ops['++'], ' – ', _p0._0._2))),
-					_elm_lang$html$Html_Attributes$style(
-					_elm_lang$core$Native_List.fromArray(
-						[
-							{ctor: '_Tuple2', _0: 'height', _1: '2em'},
-							{ctor: '_Tuple2', _0: 'width', _1: '2em'},
-							{ctor: '_Tuple2', _0: 'margin-right', _1: '0.5em'}
-						]))
-				]),
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html$text(
-					_elm_lang$core$String$fromChar(_p0._0._0))
-				]));
+			_elm_lang$core$Basics_ops['++'],
+			startSlice,
+			A2(_elm_lang$core$List_ops['::'], x, endSlice));
+	});
+
+var _user$project$NoteMiner_Tree$insertChildAtIndex = F3(
+	function (newTree, index, zipper) {
+		var children = _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
+			_elm_lang$core$Basics$fst(zipper));
+		var children$ = A3(_user$project$NoteMiner_List$insertAtIndex, newTree, index, children);
+		return A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateChildren, children$, zipper);
+	});
+var _user$project$NoteMiner_Tree$insertSiblingAtIndex = F3(
+	function (newTree, index, zipper) {
+		return A2(
+			_elm_lang$core$Maybe$andThen,
+			A2(
+				_elm_lang$core$Maybe$andThen,
+				_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
+				A2(_user$project$NoteMiner_Tree$insertChildAtIndex, newTree, index)),
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index - 1));
+	});
+var _user$project$NoteMiner_Tree$canGoToNext = function (zipper) {
+	var _p0 = _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(zipper);
+	if (_p0.ctor === 'Just') {
+		return true;
 	} else {
-		return A2(
-			_elm_lang$html$Html$span,
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Attributes$style(
-					_elm_lang$core$Native_List.fromArray(
-						[
-							{ctor: '_Tuple2', _0: 'margin-right', _1: '1em'}
-						]))
-				]),
-			_elm_lang$core$Native_List.fromArray(
-				[]));
+		return false;
 	}
 };
-var _user$project$Main$viewFragment = function (fragment) {
+var _user$project$NoteMiner_Tree$getSiblings = function (zipper) {
+	var parent = A2(
+		_user$project$NoteMiner_Maybe$justOrCrash,
+		'getSiblings',
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper));
+	return _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
+		_elm_lang$core$Basics$fst(parent));
+};
+var _user$project$NoteMiner_Tree$getTreeRootFromZipper = function (zipper) {
+	return _elm_lang$core$Basics$fst(
+		A2(
+			_user$project$NoteMiner_Maybe$justOrCrash,
+			'getTreeRootFromZipper',
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper)));
+};
+var _user$project$NoteMiner_Tree$hasChildren = function (zipper) {
+	return function (_p1) {
+		return _elm_lang$core$Basics$not(
+			_elm_lang$core$List$isEmpty(_p1));
+	}(
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
+			_elm_lang$core$Basics$fst(zipper)));
+};
+var _user$project$NoteMiner_Tree$isFirstLevelNode = function (zipper) {
+	return A2(
+		_user$project$NoteMiner_Maybe$justOrCrash,
+		'isFirstLevelNode',
+		A3(
+			_elm_lang$core$Maybe$map2,
+			F2(
+				function (parent, root) {
+					return _elm_lang$core$Native_Utils.eq(
+						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(parent),
+						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(root));
+				}),
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper)));
+};
+var _user$project$NoteMiner_Tree$canDedent = function (_p2) {
+	return _elm_lang$core$Basics$not(
+		_user$project$NoteMiner_Tree$isFirstLevelNode(_p2));
+};
+var _user$project$NoteMiner_Tree$isFirstVisibleNode = function (zipper) {
+	var firstVisibleNode = A2(
+		_user$project$NoteMiner_Maybe$justOrCrash,
+		'isFirstVisibleNode',
+		A2(
+			_elm_lang$core$Maybe$andThen,
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper),
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(0)));
+	return _elm_lang$core$Native_Utils.eq(zipper, firstVisibleNode);
+};
+var _user$project$NoteMiner_Tree$canGoToPrevious = function (_p3) {
+	return _elm_lang$core$Basics$not(
+		_user$project$NoteMiner_Tree$isFirstVisibleNode(_p3));
+};
+var _user$project$NoteMiner_Tree$canRemove = function (zipper) {
+	return _elm_lang$core$Basics$not(
+		_user$project$NoteMiner_Tree$isFirstVisibleNode(zipper) && _elm_lang$core$Native_Utils.eq(
+			_elm_lang$core$List$length(
+				_user$project$NoteMiner_Tree$getSiblings(zipper)),
+			1));
+};
+var _user$project$NoteMiner_Tree$initialZipper = function (tree) {
+	return {
+		ctor: '_Tuple2',
+		_0: tree,
+		_1: _elm_lang$core$Native_List.fromArray(
+			[])
+	};
+};
+var _user$project$NoteMiner_Tree$getText = function (_p4) {
+	return function (_) {
+		return _.text;
+	}(
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(
+			_elm_lang$core$Basics$fst(_p4)));
+};
+var _user$project$NoteMiner_Tree$isTextEmpty = function (_p5) {
+	return _elm_lang$core$String$isEmpty(
+		_user$project$NoteMiner_Tree$getText(_p5));
+};
+var _user$project$NoteMiner_Tree$hasSameDatumThan = F2(
+	function (a, b) {
+		return _elm_lang$core$Native_Utils.eq(
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(a),
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(b));
+	});
+var _user$project$NoteMiner_Tree$findIndexInForest = F2(
+	function (zipper, forest) {
+		var node = _elm_lang$core$Basics$fst(zipper);
+		return A2(
+			_user$project$NoteMiner_Maybe$justOrCrash,
+			'findIndexInForest',
+			_elm_lang$core$Maybe$oneOf(
+				A2(
+					_elm_lang$core$List$indexedMap,
+					F2(
+						function (index, sibling) {
+							return A2(_user$project$NoteMiner_Tree$hasSameDatumThan, sibling, node) ? _elm_lang$core$Maybe$Just(index) : _elm_lang$core$Maybe$Nothing;
+						}),
+					forest)));
+	});
+var _user$project$NoteMiner_Tree$findIndexInSiblings = function (zipper) {
+	var siblings = _user$project$NoteMiner_Tree$getSiblings(zipper);
+	return A2(_user$project$NoteMiner_Tree$findIndexInForest, zipper, siblings);
+};
+var _user$project$NoteMiner_Tree$isFirstSibling = function (zipper) {
+	var index = _user$project$NoteMiner_Tree$findIndexInSiblings(zipper);
+	return _elm_lang$core$Native_Utils.eq(index, 0);
+};
+var _user$project$NoteMiner_Tree$canMoveUp = function (_p6) {
+	return _elm_lang$core$Basics$not(
+		_user$project$NoteMiner_Tree$isFirstSibling(_p6));
+};
+var _user$project$NoteMiner_Tree$isLastSibling = function (zipper) {
+	var index = _user$project$NoteMiner_Tree$findIndexInSiblings(zipper);
+	var nbSiblings = _elm_lang$core$List$length(
+		_user$project$NoteMiner_Tree$getSiblings(zipper));
+	return _elm_lang$core$Native_Utils.eq(index, nbSiblings - 1);
+};
+var _user$project$NoteMiner_Tree$canMoveDown = function (_p7) {
+	return _elm_lang$core$Basics$not(
+		_user$project$NoteMiner_Tree$isLastSibling(_p7));
+};
+var _user$project$NoteMiner_Tree$canIndent = function (zipper) {
+	return _elm_lang$core$Native_Utils.cmp(
+		_user$project$NoteMiner_Tree$findIndexInSiblings(zipper),
+		0) > 0;
+};
+var _user$project$NoteMiner_Tree$insertSiblingBelow = F2(
+	function (newTree, zipper) {
+		var index = _user$project$NoteMiner_Tree$findIndexInSiblings(zipper);
+		return A3(_user$project$NoteMiner_Tree$insertSiblingAtIndex, newTree, index + 1, zipper);
+	});
+var _user$project$NoteMiner_Tree$removeCurrentAndGoUp = function (zipper) {
+	var siblings = _user$project$NoteMiner_Tree$getSiblings(zipper);
+	var index = _user$project$NoteMiner_Tree$findIndexInSiblings(zipper);
+	var children$ = A2(_user$project$NoteMiner_List$removeAtIndex, index, siblings);
+	return A2(
+		_elm_lang$core$Maybe$andThen,
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateChildren(children$));
+};
+var _user$project$NoteMiner_Tree$goToNextSibling = function (zipper) {
+	var index = _user$project$NoteMiner_Tree$findIndexInSiblings(zipper);
+	return A2(
+		_elm_lang$core$Maybe$andThen,
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index + 1));
+};
+var _user$project$NoteMiner_Tree$nextId = function (tree) {
+	return function (index) {
+		var _p8 = index;
+		if (_p8.ctor === 'Just') {
+			return _p8._0 + 1;
+		} else {
+			return 0;
+		}
+	}(
+		_elm_lang$core$List$maximum(
+			A2(
+				_elm_lang$core$List$map,
+				function (_) {
+					return _.id;
+				},
+				_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$flatten(tree))));
+};
+var _user$project$NoteMiner_Tree$node = F3(
+	function (text, id, children) {
+		return A2(
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$Tree,
+			{text: text, id: id},
+			children);
+	});
+var _user$project$NoteMiner_Tree$nextNode = function (tree) {
+	return A3(
+		_user$project$NoteMiner_Tree$node,
+		'',
+		_user$project$NoteMiner_Tree$nextId(tree),
+		_elm_lang$core$Native_List.fromArray(
+			[]));
+};
+var _user$project$NoteMiner_Tree$Datum = F2(
+	function (a, b) {
+		return {text: a, id: b};
+	});
+
+var _user$project$NoteMiner_Model$getSelectedNodeZipper = function (model) {
+	var tree = model.treeUndoList.present;
+	return A2(
+		_user$project$NoteMiner_Maybe$justOrCrash,
+		'getSelectedNodeZipper',
+		A2(
+			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goTo,
+			function (datum) {
+				return _elm_lang$core$Native_Utils.eq(datum.id, model.selectedNodeId);
+			},
+			_user$project$NoteMiner_Tree$initialZipper(tree)));
+};
+var _user$project$NoteMiner_Model$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {treeUndoList: a, selectedNodeId: b, isAltDown: c, isCtrlDown: d, isShiftDown: e, searchText: f};
+	});
+
+var _user$project$NoteMiner_SampleData$sampleTree = A3(
+	_user$project$NoteMiner_Tree$node,
+	'ROOT',
+	0,
+	_elm_lang$core$Native_List.fromArray(
+		[
+			A3(
+			_user$project$NoteMiner_Tree$node,
+			'Inbox',
+			1,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A3(
+					_user$project$NoteMiner_Tree$node,
+					'Faire les courses #urgent',
+					2,
+					_elm_lang$core$Native_List.fromArray(
+						[])),
+					A3(
+					_user$project$NoteMiner_Tree$node,
+					'Aller au cinéma http://allocine.com/',
+					3,
+					_elm_lang$core$Native_List.fromArray(
+						[])),
+					A3(
+					_user$project$NoteMiner_Tree$node,
+					'Rappeler ces personnes',
+					4,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							A3(
+							_user$project$NoteMiner_Tree$node,
+							'@Bruno',
+							5,
+							_elm_lang$core$Native_List.fromArray(
+								[])),
+							A3(
+							_user$project$NoteMiner_Tree$node,
+							'@Laëtitia',
+							6,
+							_elm_lang$core$Native_List.fromArray(
+								[]))
+						]))
+				])),
+			A3(
+			_user$project$NoteMiner_Tree$node,
+			'Projets',
+			7,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A3(
+					_user$project$NoteMiner_Tree$node,
+					'NoteMiner',
+					8,
+					_elm_lang$core$Native_List.fromArray(
+						[]))
+				]))
+		]));
+
+var _user$project$NoteMiner_Keyboard$down = 40;
+var _user$project$NoteMiner_Keyboard$up = 38;
+var _user$project$NoteMiner_Keyboard$alt = 18;
+var _user$project$NoteMiner_Keyboard$ctrl = 17;
+var _user$project$NoteMiner_Keyboard$shift = 16;
+var _user$project$NoteMiner_Keyboard$enter = 13;
+var _user$project$NoteMiner_Keyboard$tab = 9;
+var _user$project$NoteMiner_Keyboard$backspace = 8;
+var _user$project$NoteMiner_Keyboard$Shift = {ctor: 'Shift'};
+var _user$project$NoteMiner_Keyboard$Alt = {ctor: 'Alt'};
+var _user$project$NoteMiner_Keyboard$Ctrl = {ctor: 'Ctrl'};
+
+var _user$project$NoteMiner_Update$SetSearchText = function (a) {
+	return {ctor: 'SetSearchText', _0: a};
+};
+var _user$project$NoteMiner_Update$MoveCurrentNodeDown = {ctor: 'MoveCurrentNodeDown'};
+var _user$project$NoteMiner_Update$MoveCurrentNodeUp = {ctor: 'MoveCurrentNodeUp'};
+var _user$project$NoteMiner_Update$DedentCurrentNode = {ctor: 'DedentCurrentNode'};
+var _user$project$NoteMiner_Update$IndentCurrentNode = {ctor: 'IndentCurrentNode'};
+var _user$project$NoteMiner_Update$RemoveCurrentNodeFromBackspace = {ctor: 'RemoveCurrentNodeFromBackspace'};
+var _user$project$NoteMiner_Update$RemoveCurrentNode = {ctor: 'RemoveCurrentNode'};
+var _user$project$NoteMiner_Update$InsertNodeBelow = {ctor: 'InsertNodeBelow'};
+var _user$project$NoteMiner_Update$SelectNextNode = {ctor: 'SelectNextNode'};
+var _user$project$NoteMiner_Update$SelectPreviousNode = {ctor: 'SelectPreviousNode'};
+var _user$project$NoteMiner_Update$SetText = function (a) {
+	return {ctor: 'SetText', _0: a};
+};
+var _user$project$NoteMiner_Update$SelectNode = function (a) {
+	return {ctor: 'SelectNode', _0: a};
+};
+var _user$project$NoteMiner_Update$ResetToSampleTree = {ctor: 'ResetToSampleTree'};
+var _user$project$NoteMiner_Update$Redo = {ctor: 'Redo'};
+var _user$project$NoteMiner_Update$Undo = {ctor: 'Undo'};
+var _user$project$NoteMiner_Update$ChangeModifierKey = F2(
+	function (a, b) {
+		return {ctor: 'ChangeModifierKey', _0: a, _1: b};
+	});
+var _user$project$NoteMiner_Update$NoOp = {ctor: 'NoOp'};
+var _user$project$NoteMiner_Update$performBlind = A2(
+	_elm_lang$core$Task$perform,
+	_elm_lang$core$Basics$always(_user$project$NoteMiner_Update$NoOp),
+	_elm_lang$core$Basics$always(_user$project$NoteMiner_Update$NoOp));
+var _user$project$NoteMiner_Update$update = F2(
+	function (msg, model) {
+		var selectedNodeZipper = _user$project$NoteMiner_Model$getSelectedNodeZipper(model);
+		var tree = model.treeUndoList.present;
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'NoOp':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'ChangeModifierKey':
+				var _p2 = _p0._1;
+				var _p1 = _p0._0;
+				switch (_p1.ctor) {
+					case 'Alt':
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{isAltDown: _p2}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					case 'Ctrl':
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{isCtrlDown: _p2}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					default:
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{isShiftDown: _p2}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+				}
+			case 'SelectNode':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{selectedNodeId: _p0._0}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'SetText':
+				var _p3 = _p0._0;
+				var tree$ = _user$project$NoteMiner_Tree$getTreeRootFromZipper(
+					A2(
+						_user$project$NoteMiner_Maybe$justOrCrash,
+						'SetText',
+						A2(
+							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateDatum,
+							function (datum) {
+								return _elm_lang$core$Native_Utils.update(
+									datum,
+									{text: _p3});
+							},
+							selectedNodeZipper)));
+				var treeUndoList$ = A2(_elm_lang$core$String$endsWith, ' ', _p3) ? A2(_elm_community$undo_redo$UndoList$new, tree$, model.treeUndoList) : A2(
+					_elm_community$undo_redo$UndoList$mapPresent,
+					_elm_lang$core$Basics$always(tree$),
+					model.treeUndoList);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeUndoList: treeUndoList$}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SelectPreviousNode':
+				var selectedNodeId$ = function (_) {
+					return _.id;
+				}(
+					_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(
+						_user$project$NoteMiner_Tree$canGoToPrevious(selectedNodeZipper) ? A2(
+							_user$project$NoteMiner_Maybe$justOrCrash,
+							'updateSelectPreviousNode',
+							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToPrevious(selectedNodeZipper)) : selectedNodeZipper));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{selectedNodeId: selectedNodeId$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'SelectNextNode':
+				var selectedNodeId$ = function (_) {
+					return _.id;
+				}(
+					_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(
+						_user$project$NoteMiner_Tree$canGoToNext(selectedNodeZipper) ? A2(
+							_user$project$NoteMiner_Maybe$justOrCrash,
+							'updateSelectNextNode',
+							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(selectedNodeZipper)) : selectedNodeZipper));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{selectedNodeId: selectedNodeId$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'InsertNodeBelow':
+				var newNode = _user$project$NoteMiner_Tree$nextNode(tree);
+				var selectedNodeZipper$ = _user$project$NoteMiner_Tree$hasChildren(selectedNodeZipper) ? A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$insertChild, newNode, selectedNodeZipper) : A2(_user$project$NoteMiner_Tree$insertSiblingBelow, newNode, selectedNodeZipper);
+				var treeUndoList$ = function (tree) {
+					return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+				}(
+					_elm_lang$core$Basics$fst(
+						A2(
+							_user$project$NoteMiner_Maybe$justOrCrash,
+							'updateInsertNodeBelow: treeUndoList\'',
+							A2(_elm_lang$core$Maybe$andThen, selectedNodeZipper$, _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+				var selectedNodeId$ = function (_) {
+					return _.id;
+				}(
+					_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(
+						A2(
+							_user$project$NoteMiner_Maybe$justOrCrash,
+							'updateInsertNodeBelow: selectedNodeId\'',
+							A2(
+								_elm_lang$core$Maybe$andThen,
+								selectedNodeZipper$,
+								_user$project$NoteMiner_Tree$hasChildren(selectedNodeZipper) ? _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(0) : _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext))));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeUndoList: treeUndoList$, selectedNodeId: selectedNodeId$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'IndentCurrentNode':
+				var index = _user$project$NoteMiner_Tree$findIndexInSiblings(selectedNodeZipper);
+				if (_user$project$NoteMiner_Tree$canIndent(selectedNodeZipper)) {
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateIndentCurrentNode',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									A2(
+										_elm_lang$core$Maybe$andThen,
+										A2(
+											_elm_lang$core$Maybe$andThen,
+											_user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper),
+											_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index - 1)),
+										_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$appendChild(
+											_elm_lang$core$Basics$fst(selectedNodeZipper))),
+									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'DedentCurrentNode':
+				if (_user$project$NoteMiner_Tree$canDedent(selectedNodeZipper)) {
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateDedentCurrentNode',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									A2(
+										_elm_lang$core$Maybe$andThen,
+										_user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper),
+										_user$project$NoteMiner_Tree$insertSiblingBelow(
+											_elm_lang$core$Basics$fst(selectedNodeZipper))),
+									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'MoveCurrentNodeUp':
+				if (_user$project$NoteMiner_Tree$canMoveUp(selectedNodeZipper)) {
+					var index = _user$project$NoteMiner_Tree$findIndexInSiblings(selectedNodeZipper);
+					var index$ = index - 1;
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateMoveCurrentNodeUp',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									A2(
+										_elm_lang$core$Maybe$andThen,
+										_user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper),
+										A2(
+											_user$project$NoteMiner_Tree$insertChildAtIndex,
+											_elm_lang$core$Basics$fst(selectedNodeZipper),
+											index$)),
+									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'MoveCurrentNodeDown':
+				if (_user$project$NoteMiner_Tree$canMoveDown(selectedNodeZipper)) {
+					var index = _user$project$NoteMiner_Tree$findIndexInSiblings(selectedNodeZipper);
+					var index$ = index + 1;
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateMoveCurrentNodeDown',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									A2(
+										_elm_lang$core$Maybe$andThen,
+										_user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper),
+										A2(
+											_user$project$NoteMiner_Tree$insertChildAtIndex,
+											_elm_lang$core$Basics$fst(selectedNodeZipper),
+											index$)),
+									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'RemoveCurrentNode':
+				if (_user$project$NoteMiner_Tree$canRemove(selectedNodeZipper)) {
+					var selectedNodeZipper$ = _user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper);
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateRemoveCurrentNode: treeUndoList\'',
+								A2(_elm_lang$core$Maybe$andThen, selectedNodeZipper$, _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					var selectedNodeId$ = function (_) {
+						return _.id;
+					}(
+						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateRemoveCurrentNode: selectedNodeId\'',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									selectedNodeZipper$,
+									function (parent) {
+										if (_user$project$NoteMiner_Tree$hasChildren(parent)) {
+											if (_user$project$NoteMiner_Tree$isLastSibling(selectedNodeZipper)) {
+												return _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRightMostChild(parent);
+											} else {
+												var index = _user$project$NoteMiner_Tree$findIndexInSiblings(selectedNodeZipper);
+												return A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild, index, parent);
+											}
+										} else {
+											return _elm_lang$core$Maybe$Just(parent);
+										}
+									}))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$, selectedNodeId: selectedNodeId$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'RemoveCurrentNodeFromBackspace':
+				if (_user$project$NoteMiner_Tree$canRemove(selectedNodeZipper)) {
+					var selectedNodeZipper$ = _user$project$NoteMiner_Tree$removeCurrentAndGoUp(selectedNodeZipper);
+					var treeUndoList$ = function (tree) {
+						return A2(_elm_community$undo_redo$UndoList$new, tree, model.treeUndoList);
+					}(
+						_elm_lang$core$Basics$fst(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'updateRemoveCurrentNode: treeUndoList\'',
+								A2(_elm_lang$core$Maybe$andThen, selectedNodeZipper$, _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot))));
+					var selectedNodeId$ = function (_) {
+						return _.id;
+					}(
+						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(
+							A2(
+								_user$project$NoteMiner_Maybe$justOrCrash,
+								'RemoveCurrentNodeFromBackspace',
+								A2(
+									_elm_lang$core$Maybe$andThen,
+									selectedNodeZipper$,
+									function (parent) {
+										if (_user$project$NoteMiner_Tree$hasChildren(parent)) {
+											var index = _user$project$NoteMiner_Tree$findIndexInSiblings(selectedNodeZipper);
+											return A2(
+												_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
+												A2(_elm_lang$core$Basics$max, 0, index - 1),
+												parent);
+										} else {
+											return _elm_lang$core$Maybe$Just(parent);
+										}
+									}))));
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{treeUndoList: treeUndoList$, selectedNodeId: selectedNodeId$}),
+						_1: _user$project$NoteMiner_Update$performBlind(
+							_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'ResetToSampleTree':
+				var treeUndoList$ = function (tree) {
+					return _elm_community$undo_redo$UndoList$fresh(tree);
+				}(
+					_user$project$NoteMiner_Tree$getTreeRootFromZipper(
+						A2(
+							_user$project$NoteMiner_Maybe$justOrCrash,
+							'ResetToSampleTree',
+							A2(
+								_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
+								0,
+								_user$project$NoteMiner_Tree$initialZipper(_user$project$NoteMiner_SampleData$sampleTree)))));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeUndoList: treeUndoList$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'Undo':
+				var treeUndoList$ = _elm_community$undo_redo$UndoList$undo(model.treeUndoList);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeUndoList: treeUndoList$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			case 'Redo':
+				var treeUndoList$ = _elm_community$undo_redo$UndoList$redo(model.treeUndoList);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeUndoList: treeUndoList$}),
+					_1: _user$project$NoteMiner_Update$performBlind(
+						_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{searchText: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+
+var _user$project$NoteMiner_View$viewSearchInput = A2(
+	_elm_lang$html$Html$input,
+	_elm_lang$core$Native_List.fromArray(
+		[
+			_elm_lang$html$Html_Events$onInput(_user$project$NoteMiner_Update$SetSearchText),
+			_elm_lang$html$Html_Attributes$placeholder('Search'),
+			_elm_lang$html$Html_Attributes$type$('search')
+		]),
+	_elm_lang$core$Native_List.fromArray(
+		[]));
+var _user$project$NoteMiner_View$separatorSpan = A2(
+	_elm_lang$html$Html$span,
+	_elm_lang$core$Native_List.fromArray(
+		[
+			_elm_lang$html$Html_Attributes$style(
+			_elm_lang$core$Native_List.fromArray(
+				[
+					{ctor: '_Tuple2', _0: 'margin-right', _1: '1em'}
+				]))
+		]),
+	_elm_lang$core$Native_List.fromArray(
+		[]));
+var _user$project$NoteMiner_View$viewToolbarItem = F2(
+	function (searchText, item) {
+		var _p0 = item;
+		if (_p0.ctor === 'Action') {
+			return A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(_p0._0._3),
+						_elm_lang$html$Html_Attributes$disabled(
+						_elm_lang$core$Basics$not(_p0._0._4)),
+						_elm_lang$html$Html_Attributes$title(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_p0._0._1,
+							A2(_elm_lang$core$Basics_ops['++'], ' – ', _p0._0._2))),
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'height', _1: '2em'},
+								{ctor: '_Tuple2', _0: 'width', _1: '2em'},
+								{ctor: '_Tuple2', _0: 'margin-right', _1: '0.5em'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						_elm_lang$core$String$fromChar(_p0._0._0))
+					]));
+		} else {
+			return _user$project$NoteMiner_View$separatorSpan;
+		}
+	});
+var _user$project$NoteMiner_View$viewFragment = function (fragment) {
 	var _p1 = fragment;
 	if (_p1.ctor === 'StringFragment') {
 		var _p2 = _p1._0;
@@ -9417,913 +10138,192 @@ var _user$project$Main$viewFragment = function (fragment) {
 		}
 	}
 };
-var _user$project$Main$canGoToNext = function (zipper) {
-	var _p5 = _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(zipper);
-	if (_p5.ctor === 'Just') {
-		return true;
-	} else {
-		return false;
-	}
-};
-var _user$project$Main$hasChildren = function (zipper) {
-	return function (_p6) {
-		return _elm_lang$core$Basics$not(
-			_elm_lang$core$List$isEmpty(_p6));
-	}(
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
-			_elm_lang$core$Basics$fst(zipper)));
-};
-var _user$project$Main$initialZipper = function (tree) {
-	return {
-		ctor: '_Tuple2',
-		_0: tree,
-		_1: _elm_lang$core$Native_List.fromArray(
-			[])
-	};
-};
-var _user$project$Main$getText = function (_p7) {
-	return function (_) {
-		return _.text;
-	}(
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(
-			_elm_lang$core$Basics$fst(_p7)));
-};
-var _user$project$Main$isTextEmpty = function (_p8) {
-	return _elm_lang$core$String$isEmpty(
-		_user$project$Main$getText(_p8));
-};
-var _user$project$Main$hasSameDatumThan = F2(
-	function (a, b) {
-		return _elm_lang$core$Native_Utils.eq(
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(a),
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(b));
-	});
-var _user$project$Main$nextId = function (tree) {
-	return function (index) {
-		var _p9 = index;
-		if (_p9.ctor === 'Just') {
-			return _p9._0 + 1;
-		} else {
-			return 0;
-		}
-	}(
-		_elm_lang$core$List$maximum(
-			A2(
-				_elm_lang$core$List$map,
-				function (_) {
-					return _.id;
-				},
-				_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$flatten(tree))));
-};
-var _user$project$Main$node = F3(
-	function (text, id, children) {
+var _user$project$NoteMiner_View$viewSelectedTreeNode = F2(
+	function (model, datum) {
 		return A2(
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$Tree,
-			{text: text, id: id},
-			children);
-	});
-var _user$project$Main$sampleTree = A3(
-	_user$project$Main$node,
-	'ROOT',
-	0,
-	_elm_lang$core$Native_List.fromArray(
-		[
-			A3(
-			_user$project$Main$node,
-			'Inbox',
-			1,
+			_elm_lang$html$Html$input,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					A3(
-					_user$project$Main$node,
-					'Faire les courses #urgent',
-					2,
-					_elm_lang$core$Native_List.fromArray(
-						[])),
-					A3(
-					_user$project$Main$node,
-					'Aller au cinéma http://allocine.com/',
-					3,
-					_elm_lang$core$Native_List.fromArray(
-						[])),
-					A3(
-					_user$project$Main$node,
-					'Rappeler ces personnes',
-					4,
+					_elm_lang$html$Html_Attributes$id(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute),
+					_elm_lang$html$Html_Attributes$value(datum.text),
+					function () {
+					var filterKey = function (keyCode) {
+						return (A2(
+							_elm_lang$core$List$member,
+							keyCode,
+							_elm_lang$core$Native_List.fromArray(
+								[_user$project$NoteMiner_Keyboard$enter, _user$project$NoteMiner_Keyboard$up, _user$project$NoteMiner_Keyboard$down, _user$project$NoteMiner_Keyboard$tab, _user$project$NoteMiner_Keyboard$ctrl, _user$project$NoteMiner_Keyboard$alt, _user$project$NoteMiner_Keyboard$shift])) || ((model.isCtrlDown && _elm_lang$core$Native_Utils.eq(
+							_elm_lang$core$Char$fromCode(keyCode),
+							_elm_lang$core$Native_Utils.chr('Z'))) || (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$backspace) && _elm_lang$core$String$isEmpty(datum.text)))) ? _elm_lang$core$Result$Ok(keyCode) : _elm_lang$core$Result$Err('Will be handled by input event');
+					};
+					var decoder = A2(
+						_elm_lang$core$Json_Decode$map,
+						function (keyCode) {
+							return _elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$backspace) ? _user$project$NoteMiner_Update$RemoveCurrentNodeFromBackspace : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$up) ? (model.isAltDown ? _user$project$NoteMiner_Update$MoveCurrentNodeUp : _user$project$NoteMiner_Update$SelectPreviousNode) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$down) ? (model.isAltDown ? _user$project$NoteMiner_Update$MoveCurrentNodeDown : _user$project$NoteMiner_Update$SelectNextNode) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$enter) ? _user$project$NoteMiner_Update$InsertNodeBelow : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$tab) ? (model.isShiftDown ? _user$project$NoteMiner_Update$DedentCurrentNode : _user$project$NoteMiner_Update$IndentCurrentNode) : ((_elm_lang$core$Native_Utils.eq(
+								_elm_lang$core$Char$fromCode(keyCode),
+								_elm_lang$core$Native_Utils.chr('K')) && (model.isCtrlDown && model.isShiftDown)) ? _user$project$NoteMiner_Update$RemoveCurrentNode : ((_elm_lang$core$Native_Utils.eq(
+								_elm_lang$core$Char$fromCode(keyCode),
+								_elm_lang$core$Native_Utils.chr('Z')) && model.isCtrlDown) ? (model.isShiftDown ? _user$project$NoteMiner_Update$Redo : _user$project$NoteMiner_Update$Undo) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$alt) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Alt, true) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$ctrl) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Ctrl, true) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$shift) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Shift, true) : _user$project$NoteMiner_Update$NoOp)))))))));
+						},
+						A2(_elm_lang$core$Json_Decode$customDecoder, _elm_lang$html$Html_Events$keyCode, filterKey));
+					var eventOptions = {preventDefault: true, stopPropagation: false};
+					return A3(_elm_lang$html$Html_Events$onWithOptions, 'keydown', eventOptions, decoder);
+				}(),
+					function () {
+					var decoder = A2(
+						_elm_lang$core$Json_Decode$map,
+						function (keyCode) {
+							return _elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$alt) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Alt, false) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$ctrl) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Ctrl, false) : (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$NoteMiner_Keyboard$shift) ? A2(_user$project$NoteMiner_Update$ChangeModifierKey, _user$project$NoteMiner_Keyboard$Shift, false) : _user$project$NoteMiner_Update$NoOp));
+						},
+						_elm_lang$html$Html_Events$keyCode);
+					return A2(_elm_lang$html$Html_Events$on, 'keyup', decoder);
+				}(),
+					_elm_lang$html$Html_Events$onInput(_user$project$NoteMiner_Update$SetText),
+					_elm_lang$html$Html_Attributes$style(
 					_elm_lang$core$Native_List.fromArray(
 						[
-							A3(
-							_user$project$Main$node,
-							'@Bruno',
-							5,
-							_elm_lang$core$Native_List.fromArray(
-								[])),
-							A3(
-							_user$project$Main$node,
-							'@Laëtitia',
-							6,
-							_elm_lang$core$Native_List.fromArray(
-								[]))
+							{ctor: '_Tuple2', _0: 'border', _1: 'none'},
+							{ctor: '_Tuple2', _0: 'background-color', _1: 'lightblue'},
+							{ctor: '_Tuple2', _0: 'font-size', _1: '1em'},
+							{ctor: '_Tuple2', _0: 'width', _1: '100%'}
 						]))
-				])),
-			A3(
-			_user$project$Main$node,
-			'Projets',
-			7,
+				]),
 			_elm_lang$core$Native_List.fromArray(
-				[
-					A3(
-					_user$project$Main$node,
-					'NoteMiner',
-					8,
-					_elm_lang$core$Native_List.fromArray(
-						[]))
-				]))
-		]));
-var _user$project$Main$datumPairToTree = function (_p10) {
-	var _p11 = _p10;
-	var _p12 = _p11._0;
-	return A3(
-		_user$project$Main$node,
-		_p12.text,
-		_p12.id,
-		A2(_elm_lang$core$List$map, _user$project$Main$datumPairToTree, _p11._1));
-};
-var _user$project$Main$justOrCrash = F2(
-	function (msg, maybe) {
-		var _p13 = maybe;
-		if (_p13.ctor === 'Just') {
-			return _p13._0;
-		} else {
-			return _elm_lang$core$Native_Utils.crashCase(
-				'Main',
-				{
-					start: {line: 125, column: 5},
-					end: {line: 130, column: 79}
-				},
-				_p13)(
-				A2(_elm_lang$core$Basics_ops['++'], msg, ': a value should never have been `Nothing`.'));
-		}
+				[]));
 	});
-var _user$project$Main$isFirstVisibleNode = function (zipper) {
-	var firstVisibleNode = A2(
-		_user$project$Main$justOrCrash,
-		'isFirstVisibleNode',
-		A2(
-			_elm_lang$core$Maybe$andThen,
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper),
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(0)));
-	return _elm_lang$core$Native_Utils.eq(zipper, firstVisibleNode);
-};
-var _user$project$Main$canGoToPrevious = function (_p15) {
-	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstVisibleNode(_p15));
-};
-var _user$project$Main$isFirstLevelNode = function (zipper) {
-	return A2(
-		_user$project$Main$justOrCrash,
-		'isFirstLevelNode',
-		A3(
-			_elm_lang$core$Maybe$map2,
-			F2(
-				function (parent, root) {
-					return A2(
-						_user$project$Main$hasSameDatumThan,
-						_elm_lang$core$Basics$fst(parent),
-						_elm_lang$core$Basics$fst(root));
-				}),
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper)));
-};
-var _user$project$Main$canDedent = function (_p16) {
-	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstLevelNode(_p16));
-};
-var _user$project$Main$getTreeRootFromZipper = function (zipper) {
-	return _elm_lang$core$Basics$fst(
-		A2(
-			_user$project$Main$justOrCrash,
-			'getTreeRootFromZipper',
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRoot(zipper)));
-};
-var _user$project$Main$nextNode = function (zipper) {
-	var tree = _user$project$Main$getTreeRootFromZipper(zipper);
-	return A3(
-		_user$project$Main$node,
-		'',
-		_user$project$Main$nextId(tree),
-		_elm_lang$core$Native_List.fromArray(
-			[]));
-};
-var _user$project$Main$getSiblings = function (zipper) {
-	var parent = A2(
-		_user$project$Main$justOrCrash,
-		'getSiblings',
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper));
-	return _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
-		_elm_lang$core$Basics$fst(parent));
-};
-var _user$project$Main$canRemove = function (zipper) {
-	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstVisibleNode(zipper) && _elm_lang$core$Native_Utils.eq(
-			_elm_lang$core$List$length(
-				_user$project$Main$getSiblings(zipper)),
-			1));
-};
-var _user$project$Main$findIndexInForest = F2(
-	function (zipper, forest) {
-		var node = _elm_lang$core$Basics$fst(zipper);
-		return A2(
-			_user$project$Main$justOrCrash,
-			'findIndexInForest',
-			_elm_lang$core$Maybe$oneOf(
-				A2(
-					_elm_lang$core$List$indexedMap,
-					F2(
-						function (index, sibling) {
-							return A2(_user$project$Main$hasSameDatumThan, sibling, node) ? _elm_lang$core$Maybe$Just(index) : _elm_lang$core$Maybe$Nothing;
-						}),
-					forest)));
-	});
-var _user$project$Main$findIndexInSiblings = function (zipper) {
-	var siblings = _user$project$Main$getSiblings(zipper);
-	return A2(_user$project$Main$findIndexInForest, zipper, siblings);
-};
-var _user$project$Main$isFirstSibling = function (zipper) {
-	var index = _user$project$Main$findIndexInSiblings(zipper);
-	return _elm_lang$core$Native_Utils.eq(index, 0);
-};
-var _user$project$Main$canMoveUp = function (_p17) {
-	return _elm_lang$core$Basics$not(
-		_user$project$Main$isFirstSibling(_p17));
-};
-var _user$project$Main$isLastSibling = function (zipper) {
-	var index = _user$project$Main$findIndexInSiblings(zipper);
-	var nbSiblings = _elm_lang$core$List$length(
-		_user$project$Main$getSiblings(zipper));
-	return _elm_lang$core$Native_Utils.eq(index, nbSiblings - 1);
-};
-var _user$project$Main$canMoveDown = function (_p18) {
-	return _elm_lang$core$Basics$not(
-		_user$project$Main$isLastSibling(_p18));
-};
-var _user$project$Main$canIndent = function (zipper) {
-	return _elm_lang$core$Native_Utils.cmp(
-		_user$project$Main$findIndexInSiblings(zipper),
-		0) > 0;
-};
-var _user$project$Main$goToNextSibling = function (zipper) {
-	var index = _user$project$Main$findIndexInSiblings(zipper);
-	return A2(
-		_elm_lang$core$Maybe$andThen,
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index + 1));
-};
-var _user$project$Main$removeAtIndex = F2(
-	function (index, xs) {
-		var endSlice = A2(_elm_lang$core$List$drop, index + 1, xs);
-		var startSlice = A2(_elm_lang$core$List$take, index, xs);
-		return A2(_elm_lang$core$Basics_ops['++'], startSlice, endSlice);
-	});
-var _user$project$Main$removeCurrentAndGoUp = function (zipper) {
-	var siblings = _user$project$Main$getSiblings(zipper);
-	var index = _user$project$Main$findIndexInSiblings(zipper);
-	var children$ = A2(_user$project$Main$removeAtIndex, index, siblings);
-	return A2(
-		_elm_lang$core$Maybe$andThen,
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
-		_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateChildren(children$));
-};
-var _user$project$Main$insertAtIndex = F3(
-	function (x, index, xs) {
-		var endSlice = A2(_elm_lang$core$List$drop, index, xs);
-		var startSlice = A2(_elm_lang$core$List$take, index, xs);
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			startSlice,
-			A2(_elm_lang$core$List_ops['::'], x, endSlice));
-	});
-var _user$project$Main$insertChildAtIndex = F3(
-	function (newTree, index, zipper) {
-		var children = _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
-			_elm_lang$core$Basics$fst(zipper));
-		var children$ = A3(_user$project$Main$insertAtIndex, newTree, index, children);
-		return A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateChildren, children$, zipper);
-	});
-var _user$project$Main$insertSiblingAtIndex = F3(
-	function (newTree, index, zipper) {
-		return A2(
-			_elm_lang$core$Maybe$andThen,
-			A2(
-				_elm_lang$core$Maybe$andThen,
-				_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goUp(zipper),
-				A2(_user$project$Main$insertChildAtIndex, newTree, index)),
-			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index - 1));
-	});
-var _user$project$Main$insertSiblingBelow = F2(
-	function (newTree, zipper) {
-		var index = _user$project$Main$findIndexInSiblings(zipper);
-		return A3(_user$project$Main$insertSiblingAtIndex, newTree, index + 1, zipper);
-	});
-var _user$project$Main$selectedNodeId = 'selected-node';
-var _user$project$Main$down = 40;
-var _user$project$Main$up = 38;
-var _user$project$Main$alt = 18;
-var _user$project$Main$ctrl = 17;
-var _user$project$Main$shift = 16;
-var _user$project$Main$enter = 13;
-var _user$project$Main$tab = 9;
-var _user$project$Main$backspace = 8;
-var _user$project$Main$setStorage = _elm_lang$core$Native_Platform.outgoingPort(
-	'setStorage',
-	function (v) {
-		return v;
-	});
-var _user$project$Main$Datum = F2(
-	function (a, b) {
-		return {text: a, id: b};
-	});
-var _user$project$Main$decodeDatum = A3(
-	_elm_lang$core$Json_Decode$object2,
-	_user$project$Main$Datum,
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'text', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'id', _elm_lang$core$Json_Decode$int));
-var _user$project$Main$Model = F4(
-	function (a, b, c, d) {
-		return {currentZipperUndoList: a, isAltDown: b, isCtrlDown: c, isShiftDown: d};
-	});
-var _user$project$Main$Redo = {ctor: 'Redo'};
-var _user$project$Main$Undo = {ctor: 'Undo'};
-var _user$project$Main$ResetToSampleTree = {ctor: 'ResetToSampleTree'};
-var _user$project$Main$MoveCurrentNodeDown = {ctor: 'MoveCurrentNodeDown'};
-var _user$project$Main$MoveCurrentNodeUp = {ctor: 'MoveCurrentNodeUp'};
-var _user$project$Main$DedentCurrentNode = {ctor: 'DedentCurrentNode'};
-var _user$project$Main$IndentCurrentNode = {ctor: 'IndentCurrentNode'};
-var _user$project$Main$RemoveCurrentNodeFromBackspace = {ctor: 'RemoveCurrentNodeFromBackspace'};
-var _user$project$Main$RemoveCurrentNode = {ctor: 'RemoveCurrentNode'};
-var _user$project$Main$InsertNodeBelow = {ctor: 'InsertNodeBelow'};
-var _user$project$Main$SelectNextNode = {ctor: 'SelectNextNode'};
-var _user$project$Main$SelectPreviousNode = {ctor: 'SelectPreviousNode'};
-var _user$project$Main$SetText = function (a) {
-	return {ctor: 'SetText', _0: a};
-};
-var _user$project$Main$KeyUp = function (a) {
-	return {ctor: 'KeyUp', _0: a};
-};
-var _user$project$Main$KeyDown = function (a) {
-	return {ctor: 'KeyDown', _0: a};
-};
-var _user$project$Main$FocusNode = function (a) {
-	return {ctor: 'FocusNode', _0: a};
-};
-var _user$project$Main$NoOp = {ctor: 'NoOp'};
-var _user$project$Main$performBlind = A2(
-	_elm_lang$core$Task$perform,
-	_elm_lang$core$Basics$always(_user$project$Main$NoOp),
-	_elm_lang$core$Basics$always(_user$project$Main$NoOp));
-var _user$project$Main$update = F2(
-	function (msg, model) {
-		var updateRedo = function (_p19) {
-			var _p20 = _p19;
-			var currentZipperUndoList$ = _elm_community$undo_redo$UndoList$redo(model.currentZipperUndoList);
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{currentZipperUndoList: currentZipperUndoList$}),
-				_1: _user$project$Main$performBlind(
-					_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-			};
-		};
-		var updateUndo = function (_p21) {
-			var _p22 = _p21;
-			var currentZipperUndoList$ = _elm_community$undo_redo$UndoList$undo(model.currentZipperUndoList);
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{currentZipperUndoList: currentZipperUndoList$}),
-				_1: _user$project$Main$performBlind(
-					_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-			};
-		};
-		var updateSelectNextNode = function (_p23) {
-			var _p24 = _p23;
-			var currentZipperUndoList$ = A2(
-				_elm_community$undo_redo$UndoList$mapPresent,
-				function (zipper) {
-					return _user$project$Main$canGoToNext(zipper) ? A2(
-						_user$project$Main$justOrCrash,
-						'SelectNextNode',
-						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext(zipper)) : zipper;
-				},
-				model.currentZipperUndoList);
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{currentZipperUndoList: currentZipperUndoList$}),
-				_1: _user$project$Main$performBlind(
-					_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-			};
-		};
-		var updateSelectPreviousNode = function (_p25) {
-			var _p26 = _p25;
-			var currentZipperUndoList$ = A2(
-				_elm_community$undo_redo$UndoList$mapPresent,
-				function (zipper) {
-					return _user$project$Main$canGoToPrevious(zipper) ? A2(
-						_user$project$Main$justOrCrash,
-						'SelectPreviousNode',
-						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToPrevious(zipper)) : zipper;
-				},
-				model.currentZipperUndoList);
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{currentZipperUndoList: currentZipperUndoList$}),
-				_1: _user$project$Main$performBlind(
-					_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-			};
-		};
-		var currentZipper = model.currentZipperUndoList.present;
-		var updateMoveCurrentNodeUp = function (_p27) {
-			var _p28 = _p27;
-			if (_user$project$Main$canMoveUp(currentZipper)) {
-				var index = _user$project$Main$findIndexInSiblings(currentZipper);
-				var index$ = index - 1;
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'MoveCurrentNodeUp',
-						A2(
-							_elm_lang$core$Maybe$andThen,
-							A2(
-								_elm_lang$core$Maybe$andThen,
-								_user$project$Main$removeCurrentAndGoUp(currentZipper),
-								A2(
-									_user$project$Main$insertChildAtIndex,
-									_elm_lang$core$Basics$fst(currentZipper),
-									index$)),
-							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index$))));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			}
-		};
-		var updateMoveCurrentNodeDown = function (_p29) {
-			var _p30 = _p29;
-			if (_user$project$Main$canMoveDown(currentZipper)) {
-				var index = _user$project$Main$findIndexInSiblings(currentZipper);
-				var index$ = index + 1;
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'MoveCurrentNodeDown',
-						A2(
-							_elm_lang$core$Maybe$andThen,
-							A2(
-								_elm_lang$core$Maybe$andThen,
-								_user$project$Main$removeCurrentAndGoUp(currentZipper),
-								A2(
-									_user$project$Main$insertChildAtIndex,
-									_elm_lang$core$Basics$fst(currentZipper),
-									index$)),
-							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index$))));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			}
-		};
-		var updateInsertNodeBelow = function (_p31) {
-			var _p32 = _p31;
-			var newNode = _user$project$Main$nextNode(currentZipper);
-			var currentZipperUndoList$ = function (state) {
-				return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-			}(
-				_user$project$Main$hasChildren(currentZipper) ? A2(
-					_user$project$Main$justOrCrash,
-					'InsertNodeBelow; goToChild 0',
-					A2(
-						_elm_lang$core$Maybe$andThen,
-						A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$insertChild, newNode, currentZipper),
-						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(0))) : A2(
-					_user$project$Main$justOrCrash,
-					'InsertNodeBelow; goToNext',
-					A2(
-						_elm_lang$core$Maybe$andThen,
-						A2(_user$project$Main$insertSiblingBelow, newNode, currentZipper),
-						_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToNext)));
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{currentZipperUndoList: currentZipperUndoList$}),
-				_1: _user$project$Main$performBlind(
-					_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-			};
-		};
-		var updateIndentCurrentNode = function (_p33) {
-			var _p34 = _p33;
-			var index = _user$project$Main$findIndexInSiblings(currentZipper);
-			if (_user$project$Main$canIndent(currentZipper)) {
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'IndentCurrentNode',
-						A2(
-							_elm_lang$core$Maybe$andThen,
-							A2(
-								_elm_lang$core$Maybe$andThen,
-								A2(
-									_elm_lang$core$Maybe$andThen,
-									_user$project$Main$removeCurrentAndGoUp(currentZipper),
-									_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild(index - 1)),
-								_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$appendChild(
-									_elm_lang$core$Basics$fst(currentZipper))),
-							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRightMostChild)));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			}
-		};
-		var updateDedentCurrentNode = function (_p35) {
-			var _p36 = _p35;
-			if (_user$project$Main$canDedent(currentZipper)) {
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'DedentCurrentNode',
-						A2(
-							_elm_lang$core$Maybe$andThen,
-							A2(
-								_elm_lang$core$Maybe$andThen,
-								_user$project$Main$removeCurrentAndGoUp(currentZipper),
-								_user$project$Main$insertSiblingBelow(
-									_elm_lang$core$Basics$fst(currentZipper))),
-							_user$project$Main$goToNextSibling)));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			}
-		};
-		var updateRemoveCurrentNode = function (_p37) {
-			var _p38 = _p37;
-			if (_user$project$Main$canRemove(currentZipper)) {
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'RemoveCurrentNode',
-						A2(
-							_elm_lang$core$Maybe$andThen,
-							_user$project$Main$removeCurrentAndGoUp(currentZipper),
-							function (parent) {
-								if (_user$project$Main$hasChildren(parent)) {
-									if (_user$project$Main$isLastSibling(currentZipper)) {
-										return _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToRightMostChild(parent);
-									} else {
-										var index = _user$project$Main$findIndexInSiblings(currentZipper);
-										return A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild, index, parent);
-									}
-								} else {
-									return _elm_lang$core$Maybe$Just(parent);
-								}
-							})));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			}
-		};
-		var _p39 = msg;
-		switch (_p39.ctor) {
-			case 'NoOp':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			case 'FocusNode':
-				var currentZipperUndoList$ = A2(
-					_elm_community$undo_redo$UndoList$mapPresent,
-					_elm_lang$core$Basics$always(_p39._0),
-					model.currentZipperUndoList);
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			case 'KeyDown':
-				var _p40 = _p39._0;
-				return _elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$alt) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isAltDown: true}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$ctrl) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isCtrlDown: true}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$shift) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isShiftDown: true}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$up) ? (model.isAltDown ? updateMoveCurrentNodeUp(
-					{ctor: '_Tuple0'}) : updateSelectPreviousNode(
-					{ctor: '_Tuple0'})) : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$down) ? (model.isAltDown ? updateMoveCurrentNodeDown(
-					{ctor: '_Tuple0'}) : updateSelectNextNode(
-					{ctor: '_Tuple0'})) : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$enter) ? updateInsertNodeBelow(
-					{ctor: '_Tuple0'}) : (_elm_lang$core$Native_Utils.eq(_p40, _user$project$Main$tab) ? (model.isShiftDown ? updateDedentCurrentNode(
-					{ctor: '_Tuple0'}) : updateIndentCurrentNode(
-					{ctor: '_Tuple0'})) : ((_elm_lang$core$Native_Utils.eq(
-					_elm_lang$core$Char$fromCode(_p40),
-					_elm_lang$core$Native_Utils.chr('K')) && (model.isCtrlDown && model.isShiftDown)) ? updateRemoveCurrentNode(
-					{ctor: '_Tuple0'}) : ((_elm_lang$core$Native_Utils.eq(
-					_elm_lang$core$Char$fromCode(_p40),
-					_elm_lang$core$Native_Utils.chr('Z')) && model.isCtrlDown) ? (model.isShiftDown ? updateRedo(
-					{ctor: '_Tuple0'}) : updateUndo(
-					{ctor: '_Tuple0'})) : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none}))))))));
-			case 'KeyUp':
-				var _p41 = _p39._0;
-				return _elm_lang$core$Native_Utils.eq(_p41, _user$project$Main$alt) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isAltDown: false}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : (_elm_lang$core$Native_Utils.eq(_p41, _user$project$Main$ctrl) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isCtrlDown: false}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : (_elm_lang$core$Native_Utils.eq(_p41, _user$project$Main$shift) ? {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{isShiftDown: false}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none}));
-			case 'SetText':
-				var _p42 = _p39._0;
-				var setText = function (zipper) {
-					return A2(
-						_user$project$Main$justOrCrash,
-						'SetText',
-						A2(
-							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$updateDatum,
-							function (datum) {
-								return _elm_lang$core$Native_Utils.update(
-									datum,
-									{text: _p42});
-							},
-							zipper));
-				};
-				var currentZipperUndoList$ = A2(_elm_lang$core$String$endsWith, ' ', _p42) ? A2(
-					_elm_community$undo_redo$UndoList$new,
-					setText(currentZipper),
-					model.currentZipperUndoList) : A2(_elm_community$undo_redo$UndoList$mapPresent, setText, model.currentZipperUndoList);
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'SelectPreviousNode':
-				return updateSelectPreviousNode(
-					{ctor: '_Tuple0'});
-			case 'SelectNextNode':
-				return updateSelectNextNode(
-					{ctor: '_Tuple0'});
-			case 'InsertNodeBelow':
-				return updateInsertNodeBelow(
-					{ctor: '_Tuple0'});
-			case 'IndentCurrentNode':
-				return updateIndentCurrentNode(
-					{ctor: '_Tuple0'});
-			case 'DedentCurrentNode':
-				return updateDedentCurrentNode(
-					{ctor: '_Tuple0'});
-			case 'MoveCurrentNodeUp':
-				return updateMoveCurrentNodeUp(
-					{ctor: '_Tuple0'});
-			case 'MoveCurrentNodeDown':
-				return updateMoveCurrentNodeDown(
-					{ctor: '_Tuple0'});
-			case 'RemoveCurrentNode':
-				return updateRemoveCurrentNode(
-					{ctor: '_Tuple0'});
-			case 'RemoveCurrentNodeFromBackspace':
-				if (_user$project$Main$canRemove(currentZipper)) {
-					var currentZipperUndoList$ = function (state) {
-						return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-					}(
-						A2(
-							_user$project$Main$justOrCrash,
-							'RemoveCurrentNodeFromBackspace',
-							A2(
-								_elm_lang$core$Maybe$andThen,
-								_user$project$Main$removeCurrentAndGoUp(currentZipper),
-								function (parent) {
-									if (_user$project$Main$hasChildren(parent)) {
-										var index = _user$project$Main$findIndexInSiblings(currentZipper);
-										return A2(
-											_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
-											A2(_elm_lang$core$Basics$max, 0, index - 1),
-											parent);
-									} else {
-										return _elm_lang$core$Maybe$Just(parent);
-									}
-								})));
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{currentZipperUndoList: currentZipperUndoList$}),
-						_1: _user$project$Main$performBlind(
-							_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-					};
-				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			case 'ResetToSampleTree':
-				var currentZipperUndoList$ = function (state) {
-					return A2(_elm_community$undo_redo$UndoList$new, state, model.currentZipperUndoList);
-				}(
-					A2(
-						_user$project$Main$justOrCrash,
-						'ResetToSampleTree',
-						A2(
-							_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
-							0,
-							_user$project$Main$initialZipper(_user$project$Main$sampleTree))));
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentZipperUndoList: currentZipperUndoList$}),
-					_1: _user$project$Main$performBlind(
-						_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
-				};
-			case 'Undo':
-				return updateUndo(
-					{ctor: '_Tuple0'});
-			default:
-				return updateRedo(
-					{ctor: '_Tuple0'});
-		}
-	});
-var _user$project$Main$updateWithStorage = F2(
-	function (msg, model) {
-		var _p43 = A2(_user$project$Main$update, msg, model);
-		var newModel = _p43._0;
-		var cmds = _p43._1;
-		var tree = _user$project$Main$getTreeRootFromZipper(newModel.currentZipperUndoList.present);
-		return {
-			ctor: '_Tuple2',
-			_0: newModel,
-			_1: _elm_lang$core$Platform_Cmd$batch(
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_user$project$Main$setStorage(
-						_user$project$Main$serialize(tree)),
-						cmds
-					]))
-		};
-	});
-var _user$project$Main$MatchFragment = F2(
+var _user$project$NoteMiner_View$MatchFragment = F2(
 	function (a, b) {
 		return {ctor: 'MatchFragment', _0: a, _1: b};
 	});
-var _user$project$Main$StringFragment = function (a) {
+var _user$project$NoteMiner_View$StringFragment = function (a) {
 	return {ctor: 'StringFragment', _0: a};
 };
-var _user$project$Main$fragments = function (str) {
+var _user$project$NoteMiner_View$fragments = function (str) {
 	var initialFragments = _elm_lang$core$Native_List.fromArray(
 		[
-			_user$project$Main$StringFragment(str)
+			_user$project$NoteMiner_View$StringFragment(str)
 		]);
 	var fromRegex = F3(
 		function (regex, matchType, str) {
 			var fromMatches = F3(
 				function (accStr, accMatches, accIndex) {
-					var _p44 = accMatches;
-					if (_p44.ctor === '[]') {
+					var _p5 = accMatches;
+					if (_p5.ctor === '[]') {
 						return _elm_lang$core$String$isEmpty(accStr) ? _elm_lang$core$Native_List.fromArray(
 							[]) : _elm_lang$core$Native_List.fromArray(
 							[
-								_user$project$Main$StringFragment(accStr)
+								_user$project$NoteMiner_View$StringFragment(accStr)
 							]);
 					} else {
-						var _p46 = _p44._0.match;
-						var _p45 = _p44._0.index;
-						var firstFragmentStr = A2(_elm_lang$core$String$left, _p45 - accIndex, accStr);
+						var _p7 = _p5._0.match;
+						var _p6 = _p5._0.index;
+						var firstFragmentStr = A2(_elm_lang$core$String$left, _p6 - accIndex, accStr);
 						return A2(
 							_elm_lang$core$Basics_ops['++'],
 							_elm_lang$core$String$isEmpty(firstFragmentStr) ? _elm_lang$core$Native_List.fromArray(
 								[]) : _elm_lang$core$Native_List.fromArray(
 								[
-									_user$project$Main$StringFragment(firstFragmentStr)
+									_user$project$NoteMiner_View$StringFragment(firstFragmentStr)
 								]),
 							A2(
 								_elm_lang$core$List_ops['::'],
-								A2(_user$project$Main$MatchFragment, matchType, _p46),
+								A2(_user$project$NoteMiner_View$MatchFragment, matchType, _p7),
 								function () {
 									var remainingStr = A3(
 										_elm_lang$core$String$slice,
-										(_p45 - accIndex) + _elm_lang$core$String$length(_p46),
+										(_p6 - accIndex) + _elm_lang$core$String$length(_p7),
 										_elm_lang$core$String$length(accStr),
 										accStr);
 									return A3(
 										fromMatches,
 										remainingStr,
-										_p44._1,
-										_p45 + _elm_lang$core$String$length(_p46));
+										_p5._1,
+										_p6 + _elm_lang$core$String$length(_p7));
 								}()));
 					}
 				});
 			var matches = A3(_elm_lang$core$Regex$find, _elm_lang$core$Regex$All, regex, str);
 			return _elm_lang$core$List$isEmpty(matches) ? _elm_lang$core$Native_List.fromArray(
 				[
-					_user$project$Main$StringFragment(str)
+					_user$project$NoteMiner_View$StringFragment(str)
 				]) : A3(fromMatches, str, matches, 0);
 		});
 	return A2(
 		_elm_lang$core$List$foldl,
 		F2(
-			function (_p47, accFragments) {
-				var _p48 = _p47;
+			function (_p8, accFragments) {
+				var _p9 = _p8;
 				return A2(
 					_elm_lang$core$List$concatMap,
 					function (fragment) {
-						var _p49 = fragment;
-						if (_p49.ctor === 'StringFragment') {
-							return A3(fromRegex, _p48._0, _p48._1, _p49._0);
+						var _p10 = fragment;
+						if (_p10.ctor === 'StringFragment') {
+							return A3(fromRegex, _p9._0, _p9._1, _p10._0);
 						} else {
 							return _elm_lang$core$Native_List.fromArray(
-								[_p49]);
+								[_p10]);
 						}
 					},
 					accFragments);
 			}),
 		initialFragments);
 };
-var _user$project$Main$Url = {ctor: 'Url'};
-var _user$project$Main$Contact = {ctor: 'Contact'};
-var _user$project$Main$Tag = {ctor: 'Tag'};
-var _user$project$Main$viewTreeNode = F2(
+var _user$project$NoteMiner_View$Url = {ctor: 'Url'};
+var _user$project$NoteMiner_View$Contact = {ctor: 'Contact'};
+var _user$project$NoteMiner_View$Tag = {ctor: 'Tag'};
+var _user$project$NoteMiner_View$viewUnselectedTreeNode = function (datum) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Events$onClick(
+				_user$project$NoteMiner_Update$SelectNode(datum.id)),
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'padding', _1: '1px 0'},
+						{ctor: '_Tuple2', _0: 'white-space', _1: 'pre-wrap'}
+					]))
+			]),
+		function () {
+			var unicodeCharacter = '[\\u00BF-\\u1FFF\\u2C00-\\uD7FF\\w]';
+			return A2(
+				_elm_lang$core$List$map,
+				_user$project$NoteMiner_View$viewFragment,
+				A2(
+					_user$project$NoteMiner_View$fragments,
+					datum.text,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							{
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Regex$regex(
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'#',
+									A2(_elm_lang$core$Basics_ops['++'], unicodeCharacter, '+'))),
+							_1: _user$project$NoteMiner_View$Tag
+						},
+							{
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Regex$regex(
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'@',
+									A2(_elm_lang$core$Basics_ops['++'], unicodeCharacter, '+'))),
+							_1: _user$project$NoteMiner_View$Contact
+						},
+							{
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Regex$caseInsensitive(
+								_elm_lang$core$Regex$regex('(https?://)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\w \\.-]*)*/?')),
+							_1: _user$project$NoteMiner_View$Url
+						}
+						])));
+		}());
+};
+var _user$project$NoteMiner_View$viewTreeNode = F2(
 	function (model, accuZipper) {
-		var currentZipper = model.currentZipperUndoList.present;
 		var node = _elm_lang$core$Basics$fst(accuZipper);
 		var datum = _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(node);
 		var liHtml = A2(
@@ -10332,107 +10332,17 @@ var _user$project$Main$viewTreeNode = F2(
 				[]),
 			_elm_lang$core$Native_List.fromArray(
 				[
-					function () {
-					var isCurrentZipper = A2(
-						_user$project$Main$hasSameDatumThan,
-						_elm_lang$core$Basics$fst(accuZipper),
-						_elm_lang$core$Basics$fst(currentZipper));
-					return isCurrentZipper ? A2(
-						_elm_lang$html$Html$input,
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html_Attributes$id(_user$project$Main$selectedNodeId),
-								_elm_lang$html$Html_Attributes$value(datum.text),
-								function () {
-								var filterKey = function (keyCode) {
-									return (A2(
-										_elm_lang$core$List$member,
-										keyCode,
-										_elm_lang$core$Native_List.fromArray(
-											[_user$project$Main$enter, _user$project$Main$up, _user$project$Main$down, _user$project$Main$tab])) || ((_elm_lang$core$Native_Utils.eq(
-										_elm_lang$core$Char$fromCode(keyCode),
-										_elm_lang$core$Native_Utils.chr('Z')) && model.isCtrlDown) || (_elm_lang$core$Native_Utils.eq(keyCode, _user$project$Main$backspace) && _elm_lang$core$String$isEmpty(datum.text)))) ? _elm_lang$core$Result$Ok(keyCode) : _elm_lang$core$Result$Err('Will be handled by input event');
-								};
-								var decoder = A2(
-									_elm_lang$core$Json_Decode$map,
-									function (keyCode) {
-										return _elm_lang$core$Native_Utils.eq(keyCode, _user$project$Main$backspace) ? _user$project$Main$RemoveCurrentNodeFromBackspace : _user$project$Main$NoOp;
-									},
-									A2(_elm_lang$core$Json_Decode$customDecoder, _elm_lang$html$Html_Events$keyCode, filterKey));
-								var eventOptions = {preventDefault: true, stopPropagation: false};
-								return A3(_elm_lang$html$Html_Events$onWithOptions, 'keydown', eventOptions, decoder);
-							}(),
-								_elm_lang$html$Html_Events$onInput(_user$project$Main$SetText),
-								_elm_lang$html$Html_Attributes$style(
-								_elm_lang$core$Native_List.fromArray(
-									[
-										{ctor: '_Tuple2', _0: 'border', _1: 'none'},
-										{ctor: '_Tuple2', _0: 'background-color', _1: 'lightblue'},
-										{ctor: '_Tuple2', _0: 'font-size', _1: '1em'},
-										{ctor: '_Tuple2', _0: 'width', _1: '100%'}
-									]))
-							]),
-						_elm_lang$core$Native_List.fromArray(
-							[])) : A2(
-						_elm_lang$html$Html$div,
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html_Events$onClick(
-								_user$project$Main$FocusNode(accuZipper)),
-								_elm_lang$html$Html_Attributes$style(
-								_elm_lang$core$Native_List.fromArray(
-									[
-										{ctor: '_Tuple2', _0: 'padding', _1: '1px 0'},
-										{ctor: '_Tuple2', _0: 'white-space', _1: 'pre-wrap'}
-									]))
-							]),
-						function () {
-							var unicodeCharacter = '[\\u00BF-\\u1FFF\\u2C00-\\uD7FF\\w]';
-							return A2(
-								_elm_lang$core$List$map,
-								_user$project$Main$viewFragment,
-								A2(
-									_user$project$Main$fragments,
-									datum.text,
-									_elm_lang$core$Native_List.fromArray(
-										[
-											{
-											ctor: '_Tuple2',
-											_0: _elm_lang$core$Regex$regex(
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													'#',
-													A2(_elm_lang$core$Basics_ops['++'], unicodeCharacter, '+'))),
-											_1: _user$project$Main$Tag
-										},
-											{
-											ctor: '_Tuple2',
-											_0: _elm_lang$core$Regex$regex(
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													'@',
-													A2(_elm_lang$core$Basics_ops['++'], unicodeCharacter, '+'))),
-											_1: _user$project$Main$Contact
-										},
-											{
-											ctor: '_Tuple2',
-											_0: _elm_lang$core$Regex$caseInsensitive(
-												_elm_lang$core$Regex$regex('(https?://)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\w \\.-]*)*/?')),
-											_1: _user$project$Main$Url
-										}
-										])));
-						}());
-				}()
+					_elm_lang$core$Native_Utils.eq(datum.id, model.selectedNodeId) ? A2(_user$project$NoteMiner_View$viewSelectedTreeNode, model, datum) : _user$project$NoteMiner_View$viewUnselectedTreeNode(datum)
 				]));
 		var nodeChildren = _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(node);
 		return _elm_lang$core$List$isEmpty(nodeChildren) ? _elm_lang$core$Native_List.fromArray(
 			[liHtml]) : _elm_lang$core$Native_List.fromArray(
 			[
 				liHtml,
-				A2(_user$project$Main$viewTreeNodeChildren, model, accuZipper)
+				A2(_user$project$NoteMiner_View$viewTreeNodeChildren, model, accuZipper)
 			]);
 	});
-var _user$project$Main$viewTreeNodeChildren = F2(
+var _user$project$NoteMiner_View$viewTreeNodeChildren = F2(
 	function (model, accuZipper) {
 		var children = _tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(
 			_elm_lang$core$Basics$fst(accuZipper));
@@ -10444,160 +10354,172 @@ var _user$project$Main$viewTreeNodeChildren = F2(
 				A2(
 					_elm_lang$core$List$indexedMap,
 					F2(
-						function (index, _p50) {
+						function (index, _p11) {
 							var accuZipper$ = A2(
-								_user$project$Main$justOrCrash,
+								_user$project$NoteMiner_Maybe$justOrCrash,
 								'viewTreeNodeChildren',
 								A2(_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild, index, accuZipper));
-							return A2(_user$project$Main$viewTreeNode, model, accuZipper$);
+							return A2(_user$project$NoteMiner_View$viewTreeNode, model, accuZipper$);
 						}),
 					children)));
 	});
-var _user$project$Main$viewTree = function (model) {
-	var onKeyUp = function (tagger) {
-		return A2(
-			_elm_lang$html$Html_Events$on,
-			'keyup',
-			A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$keyCode));
-	};
-	var onKeyDown = function (tagger) {
-		return A2(
-			_elm_lang$html$Html_Events$on,
-			'keydown',
-			A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$keyCode));
-	};
-	var currentZipper = model.currentZipperUndoList.present;
-	var tree = _user$project$Main$getTreeRootFromZipper(currentZipper);
+var _user$project$NoteMiner_View$viewTree = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
-			[
-				onKeyDown(_user$project$Main$KeyDown),
-				onKeyUp(_user$project$Main$KeyUp),
-				_elm_lang$html$Html_Attributes$style(
-				_elm_lang$core$Native_List.fromArray(
-					[
-						{ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
-						{ctor: '_Tuple2', _0: 'font-size', _1: '1em'}
-					]))
-			]),
+			[]),
 		_elm_lang$core$Native_List.fromArray(
 			[
 				A2(
-				_user$project$Main$viewTreeNodeChildren,
+				_user$project$NoteMiner_View$viewTreeNodeChildren,
 				model,
-				_user$project$Main$initialZipper(tree))
+				_user$project$NoteMiner_Tree$initialZipper(model.treeUndoList.present))
 			]));
 };
-var _user$project$Main$Separator = {ctor: 'Separator'};
-var _user$project$Main$Action = function (a) {
+var _user$project$NoteMiner_View$viewSearchResults = function (model) {
+	var datums = A3(
+		_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$foldl,
+		F2(
+			function (datum, accuList) {
+				return A2(
+					_elm_lang$core$Regex$contains,
+					_elm_lang$core$Regex$caseInsensitive(
+						_elm_lang$core$Regex$regex(model.searchText)),
+					datum.text) ? A2(
+					_elm_lang$core$Basics_ops['++'],
+					accuList,
+					_elm_lang$core$Native_List.fromArray(
+						[datum])) : accuList;
+			}),
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		model.treeUndoList.present);
+	return A2(
+		_elm_lang$html$Html$ul,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		A2(
+			_elm_lang$core$List$map,
+			function (datum) {
+				return A2(
+					_elm_lang$html$Html$li,
+					_elm_lang$core$Native_List.fromArray(
+						[]),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$core$Native_Utils.eq(datum.id, model.selectedNodeId) ? A2(_user$project$NoteMiner_View$viewSelectedTreeNode, model, datum) : _user$project$NoteMiner_View$viewUnselectedTreeNode(datum)
+						]));
+			},
+			datums));
+};
+var _user$project$NoteMiner_View$Separator = {ctor: 'Separator'};
+var _user$project$NoteMiner_View$Action = function (a) {
 	return {ctor: 'Action', _0: a};
 };
-var _user$project$Main$viewToolbar = function (model) {
-	var currentZipper = model.currentZipperUndoList.present;
+var _user$project$NoteMiner_View$viewToolbarItems = function (model) {
+	var selectedNodeZipper = _user$project$NoteMiner_Model$getSelectedNodeZipper(model);
 	var actions = _elm_lang$core$Native_List.fromArray(
 		[
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↑'),
 				_1: 'Up',
 				_2: 'Select the previous node',
-				_3: _user$project$Main$SelectPreviousNode,
-				_4: _user$project$Main$canGoToPrevious(currentZipper)
+				_3: _user$project$NoteMiner_Update$SelectPreviousNode,
+				_4: _user$project$NoteMiner_Tree$canGoToPrevious(selectedNodeZipper)
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↓'),
 				_1: 'Down',
 				_2: 'Select the next node',
-				_3: _user$project$Main$SelectNextNode,
-				_4: _user$project$Main$canGoToNext(currentZipper)
+				_3: _user$project$NoteMiner_Update$SelectNextNode,
+				_4: _user$project$NoteMiner_Tree$canGoToNext(selectedNodeZipper)
 			}),
-			_user$project$Main$Separator,
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Separator,
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↥'),
 				_1: 'Alt-Up',
 				_2: 'Move the selected node upwards',
-				_3: _user$project$Main$MoveCurrentNodeUp,
-				_4: _user$project$Main$canMoveUp(currentZipper)
+				_3: _user$project$NoteMiner_Update$MoveCurrentNodeUp,
+				_4: _user$project$NoteMiner_Tree$canMoveUp(selectedNodeZipper)
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↧'),
 				_1: 'Alt-Down',
 				_2: 'Move the selected node downwards',
-				_3: _user$project$Main$MoveCurrentNodeDown,
-				_4: _user$project$Main$canMoveDown(currentZipper)
+				_3: _user$project$NoteMiner_Update$MoveCurrentNodeDown,
+				_4: _user$project$NoteMiner_Tree$canMoveDown(selectedNodeZipper)
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↤'),
 				_1: 'Shift-Tab',
 				_2: 'Dedent the selected node',
-				_3: _user$project$Main$DedentCurrentNode,
-				_4: _user$project$Main$canDedent(currentZipper)
+				_3: _user$project$NoteMiner_Update$DedentCurrentNode,
+				_4: _user$project$NoteMiner_Tree$canDedent(selectedNodeZipper)
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↦'),
 				_1: 'Tab',
 				_2: 'Indent the selected node',
-				_3: _user$project$Main$IndentCurrentNode,
-				_4: _user$project$Main$canIndent(currentZipper)
+				_3: _user$project$NoteMiner_Update$IndentCurrentNode,
+				_4: _user$project$NoteMiner_Tree$canIndent(selectedNodeZipper)
 			}),
-			_user$project$Main$Separator,
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Separator,
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↳'),
 				_1: 'Enter',
 				_2: 'Insert a node below',
-				_3: _user$project$Main$InsertNodeBelow,
+				_3: _user$project$NoteMiner_Update$InsertNodeBelow,
 				_4: true
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('✗'),
 				_1: 'Ctrl-Shift-K',
 				_2: 'Remove the selected node',
-				_3: _user$project$Main$RemoveCurrentNode,
-				_4: _user$project$Main$canRemove(currentZipper)
+				_3: _user$project$NoteMiner_Update$RemoveCurrentNode,
+				_4: _user$project$NoteMiner_Tree$canRemove(selectedNodeZipper)
 			}),
-			_user$project$Main$Separator,
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Separator,
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↩'),
 				_1: 'Ctrl-Z',
 				_2: 'Undo',
-				_3: _user$project$Main$Undo,
-				_4: _elm_community$undo_redo$UndoList$hasPast(model.currentZipperUndoList)
+				_3: _user$project$NoteMiner_Update$Undo,
+				_4: _elm_community$undo_redo$UndoList$hasPast(model.treeUndoList)
 			}),
-			_user$project$Main$Action(
+			_user$project$NoteMiner_View$Action(
 			{
 				ctor: '_Tuple5',
 				_0: _elm_lang$core$Native_Utils.chr('↪'),
 				_1: 'Ctrl-Shift-Z',
 				_2: 'Redo',
-				_3: _user$project$Main$Redo,
-				_4: _elm_community$undo_redo$UndoList$hasFuture(model.currentZipperUndoList)
+				_3: _user$project$NoteMiner_Update$Redo,
+				_4: _elm_community$undo_redo$UndoList$hasFuture(model.treeUndoList)
 			})
 		]);
 	return A2(
-		_elm_lang$html$Html$p,
-		_elm_lang$core$Native_List.fromArray(
-			[]),
-		A2(_elm_lang$core$List$map, _user$project$Main$viewToolbarItem, actions));
+		_elm_lang$core$List$map,
+		_user$project$NoteMiner_View$viewToolbarItem(model.searchText),
+		actions);
 };
-var _user$project$Main$view = function (model) {
+var _user$project$NoteMiner_View$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -10612,8 +10534,30 @@ var _user$project$Main$view = function (model) {
 					[
 						_elm_lang$html$Html$text('NoteMiner')
 					])),
-				_user$project$Main$viewToolbar(model),
-				_user$project$Main$viewTree(model),
+				A2(
+				_elm_lang$html$Html$p,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_user$project$NoteMiner_View$viewToolbarItems(model),
+					_elm_lang$core$Native_List.fromArray(
+						[_user$project$NoteMiner_View$separatorSpan, _user$project$NoteMiner_View$viewSearchInput]))),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'font-family', _1: 'sans-serif'},
+								{ctor: '_Tuple2', _0: 'font-size', _1: '1em'}
+							]))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$core$String$isEmpty(model.searchText) ? _user$project$NoteMiner_View$viewTree(model) : _user$project$NoteMiner_View$viewSearchResults(model)
+					])),
 				A2(
 				_elm_lang$html$Html$hr,
 				_elm_lang$core$Native_List.fromArray(
@@ -10624,7 +10568,7 @@ var _user$project$Main$view = function (model) {
 				_elm_lang$html$Html$button,
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Events$onClick(_user$project$Main$ResetToSampleTree)
+						_elm_lang$html$Html_Events$onClick(_user$project$NoteMiner_Update$ResetToSampleTree)
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
@@ -10637,83 +10581,172 @@ var _user$project$Main$view = function (model) {
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html$text(
-						A2(_elm_lang$core$Basics_ops['++'], 'The tree is stored and synchronized in localStorage. ', 'Look at the JavaScript console for error messages.'))
+						A2(_elm_lang$core$Basics_ops['++'], 'The tree is stored and synchronized in localStorage\n            . ', 'Look at the JavaScript console for error messages.'))
 					]))
 			]));
 };
-var _user$project$Main$DatumPair = F2(
+
+var _user$project$NoteMiner_Storage$lazy = function (thunk) {
+	return A2(
+		_elm_lang$core$Json_Decode$customDecoder,
+		_elm_lang$core$Json_Decode$value,
+		function (rawValue) {
+			return A2(
+				_elm_lang$core$Json_Decode$decodeValue,
+				thunk(
+					{ctor: '_Tuple0'}),
+				rawValue);
+		});
+};
+var _user$project$NoteMiner_Storage$decodeDatum = A3(
+	_elm_lang$core$Json_Decode$object2,
+	_user$project$NoteMiner_Tree$Datum,
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'text', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'id', _elm_lang$core$Json_Decode$int));
+var _user$project$NoteMiner_Storage$datumPairToTree = function (_p0) {
+	var _p1 = _p0;
+	var _p2 = _p1._0;
+	return A3(
+		_user$project$NoteMiner_Tree$node,
+		_p2.text,
+		_p2.id,
+		A2(_elm_lang$core$List$map, _user$project$NoteMiner_Storage$datumPairToTree, _p1._1));
+};
+var _user$project$NoteMiner_Storage$encodeDatum = function (datum) {
+	return _elm_lang$core$Json_Encode$object(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{
+				ctor: '_Tuple2',
+				_0: 'text',
+				_1: _elm_lang$core$Json_Encode$string(datum.text)
+			},
+				{
+				ctor: '_Tuple2',
+				_0: 'id',
+				_1: _elm_lang$core$Json_Encode$int(datum.id)
+			}
+			]));
+};
+var _user$project$NoteMiner_Storage$encodeTreeNode = function (node) {
+	return _elm_lang$core$Json_Encode$object(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				{
+				ctor: '_Tuple2',
+				_0: 'datum',
+				_1: _user$project$NoteMiner_Storage$encodeDatum(
+					_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$datum(node))
+			},
+				{
+				ctor: '_Tuple2',
+				_0: 'children',
+				_1: _elm_lang$core$Json_Encode$list(
+					A2(
+						_elm_lang$core$List$map,
+						_user$project$NoteMiner_Storage$encodeTreeNode,
+						_tomjkidd$elm_multiway_tree_zipper$MultiwayTree$children(node)))
+			}
+			]));
+};
+var _user$project$NoteMiner_Storage$serialize = function (tree) {
+	return A2(
+		_elm_lang$core$Json_Encode$encode,
+		0,
+		_user$project$NoteMiner_Storage$encodeTreeNode(tree));
+};
+var _user$project$NoteMiner_Storage$setStorage = _elm_lang$core$Native_Platform.outgoingPort(
+	'setStorage',
+	function (v) {
+		return v;
+	});
+var _user$project$NoteMiner_Storage$update = F2(
+	function (msg, model) {
+		var _p3 = A2(_user$project$NoteMiner_Update$update, msg, model);
+		var newModel = _p3._0;
+		var cmds = _p3._1;
+		var tree = newModel.treeUndoList.present;
+		return {
+			ctor: '_Tuple2',
+			_0: newModel,
+			_1: _elm_lang$core$Platform_Cmd$batch(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_user$project$NoteMiner_Storage$setStorage(
+						_user$project$NoteMiner_Storage$serialize(tree)),
+						cmds
+					]))
+		};
+	});
+var _user$project$NoteMiner_Storage$DatumPair = F2(
 	function (a, b) {
 		return {ctor: 'DatumPair', _0: a, _1: b};
 	});
-var _user$project$Main$decodeTreeNode = A3(
+var _user$project$NoteMiner_Storage$decodeTreeNode = A3(
 	_elm_lang$core$Json_Decode$object2,
-	_user$project$Main$DatumPair,
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'datum', _user$project$Main$decodeDatum),
+	_user$project$NoteMiner_Storage$DatumPair,
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'datum', _user$project$NoteMiner_Storage$decodeDatum),
 	A2(
 		_elm_lang$core$Json_Decode_ops[':='],
 		'children',
-		_user$project$Main$lazy(
-			function (_p51) {
-				return _elm_lang$core$Json_Decode$list(_user$project$Main$decodeTreeNode);
+		_user$project$NoteMiner_Storage$lazy(
+			function (_p4) {
+				return _elm_lang$core$Json_Decode$list(_user$project$NoteMiner_Storage$decodeTreeNode);
 			})));
-var _user$project$Main$unserialize = function (str) {
+var _user$project$NoteMiner_Storage$unserialize = function (str) {
 	return A2(
 		_elm_lang$core$Result$map,
-		_user$project$Main$datumPairToTree,
-		A2(_elm_lang$core$Json_Decode$decodeString, _user$project$Main$decodeTreeNode, str));
+		_user$project$NoteMiner_Storage$datumPairToTree,
+		A2(_elm_lang$core$Json_Decode$decodeString, _user$project$NoteMiner_Storage$decodeTreeNode, str));
 };
-var _user$project$Main$init = function (serializedTree) {
+
+var _user$project$NoteMiner$init = function (serializedTree) {
 	var tree = function () {
-		var _p52 = serializedTree;
-		if (_p52.ctor === 'Just') {
-			var _p53 = _user$project$Main$unserialize(_p52._0);
-			if (_p53.ctor === 'Ok') {
-				return _p53._0;
+		var _p0 = serializedTree;
+		if (_p0.ctor === 'Just') {
+			var _p1 = _user$project$NoteMiner_Storage$unserialize(_p0._0);
+			if (_p1.ctor === 'Ok') {
+				return _p1._0;
 			} else {
 				return A2(
 					_elm_lang$core$Debug$log,
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						'Error loading tree in localStorage: ',
-						A2(_elm_lang$core$Basics_ops['++'], _p53._0, ', fallback to sample tree')),
-					_user$project$Main$sampleTree);
+						A2(_elm_lang$core$Basics_ops['++'], _p1._0, ', fallback to sample tree')),
+					_user$project$NoteMiner_SampleData$sampleTree);
 			}
 		} else {
-			return A2(_elm_lang$core$Debug$log, 'No tree found in localStorage, fallback to sample tree', _user$project$Main$sampleTree);
+			return A2(_elm_lang$core$Debug$log, 'No tree found in localStorage, fallback to sample tree', _user$project$NoteMiner_SampleData$sampleTree);
 		}
 	}();
-	var zipper = function () {
-		var _p54 = A2(
+	var firstChildZipper = A2(
+		_user$project$NoteMiner_Maybe$justOrCrash,
+		'init',
+		A2(
 			_tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$goToChild,
 			0,
-			_user$project$Main$initialZipper(tree));
-		if (_p54.ctor === 'Just') {
-			return _p54._0;
-		} else {
-			return A2(
-				_elm_lang$core$Debug$log,
-				'Error with `goToChild 0` on loaded tree from localStorage, fallback to sample tree',
-				_user$project$Main$initialZipper(_user$project$Main$sampleTree));
-		}
-	}();
+			_user$project$NoteMiner_Tree$initialZipper(tree)));
 	return {
 		ctor: '_Tuple2',
 		_0: {
-			currentZipperUndoList: _elm_community$undo_redo$UndoList$fresh(zipper),
+			treeUndoList: _elm_community$undo_redo$UndoList$fresh(tree),
+			selectedNodeId: _tomjkidd$elm_multiway_tree_zipper$MultiwayTreeZipper$datum(firstChildZipper).id,
 			isAltDown: false,
 			isCtrlDown: false,
-			isShiftDown: false
+			isShiftDown: false,
+			searchText: ''
 		},
-		_1: _user$project$Main$performBlind(
-			_elm_lang$dom$Dom$focus(_user$project$Main$selectedNodeId))
+		_1: _user$project$NoteMiner_Update$performBlind(
+			_elm_lang$dom$Dom$focus(_user$project$NoteMiner_Constants$selectedNodeIdHtmlAttribute))
 	};
 };
-var _user$project$Main$main = {
+var _user$project$NoteMiner$main = {
 	main: _elm_lang$html$Html_App$programWithFlags(
 		{
-			init: _user$project$Main$init,
-			view: _user$project$Main$view,
-			update: _user$project$Main$updateWithStorage,
+			init: _user$project$NoteMiner$init,
+			view: _user$project$NoteMiner_View$view,
+			update: _user$project$NoteMiner_Storage$update,
 			subscriptions: _elm_lang$core$Basics$always(_elm_lang$core$Platform_Sub$none)
 		}),
 	flags: _elm_lang$core$Json_Decode$oneOf(
@@ -10725,8 +10758,8 @@ var _user$project$Main$main = {
 };
 
 var Elm = {};
-Elm['Main'] = Elm['Main'] || {};
-_elm_lang$core$Native_Platform.addPublicModule(Elm['Main'], 'Main', typeof _user$project$Main$main === 'undefined' ? null : _user$project$Main$main);
+Elm['NoteMiner'] = Elm['NoteMiner'] || {};
+_elm_lang$core$Native_Platform.addPublicModule(Elm['NoteMiner'], 'NoteMiner', typeof _user$project$NoteMiner$main === 'undefined' ? null : _user$project$NoteMiner$main);
 
 if (typeof define === "function" && define['amd'])
 {

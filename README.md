@@ -35,7 +35,7 @@ I develop this essentially to discover the [Elm language](http://elm-lang.org/) 
 ## Production
 
 ```
-elm-make src/Main.elm --warn --output=docs/main.js
+elm-make src/NoteMiner.elm --warn --output=docs/noteminer.js
 ```
 
 ## References

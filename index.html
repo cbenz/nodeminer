@@ -12,10 +12,10 @@
         </style>
     </head>
     <body>
-        <script src="/_compile/src/Main.elm"></script>
+        <script src="/_compile/src/NoteMiner.elm"></script>
         <script type="text/javascript">
             var serializedTree = localStorage.getItem('noteminer');
-            var noteminer = Elm.Main.fullscreen(serializedTree);
+            var noteminer = Elm.NoteMiner.fullscreen(serializedTree);
             noteminer.ports.setStorage.subscribe(function(serializedTree) {
                 localStorage.setItem('noteminer', serializedTree);
             });
