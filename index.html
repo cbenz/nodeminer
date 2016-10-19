@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>NoteMiner</title>
+        <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+        <meta content="IE=edge" http-equiv=X-UA-Compatible>
+        <meta content="width=device-width,initial-scale=1" name=viewport>
+        <style>
+            :focus {
+                outline: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="Main"></div>
+        <p>Source code on <a href="https://github.com/cbenz/noteminer">GitHub</a></p>
+        <script src="noteminer.js"></script>
+        <script type="text/javascript">
+            var storedState = localStorage.getItem('noteminer');
+            var startingState = storedState ? JSON.parse(storedState) : null;
+            var noteminer = Elm.NoteMiner.embed(document.getElementById("Main"), startingState);
+            noteminer.ports.setStorage.subscribe(function(state) {
+                localStorage.setItem('noteminer', JSON.stringify(state));
+            });
+        </script>
+    </body>
+</html>
