@@ -34,9 +34,7 @@ I develop this essentially to discover the [Elm language](http://elm-lang.org/) 
 
 ## Production
 
-```
-elm-make src/NoteMiner.elm --warn --output=docs/noteminer.js
-```
+To compile and deploy to GitHub static page in `gh-pages` branch, run `./production/deploy.sh`.
 
 ## References
 
