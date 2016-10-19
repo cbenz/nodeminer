@@ -34,7 +34,7 @@ I develop this essentially to discover the [Elm language](http://elm-lang.org/) 
 
 ## Production
 
-To compile and deploy to GitHub static page in `gh-pages` branch, run `./production/deploy.sh`.
+To compile and deploy to GitHub static pages in `gh-pages` branch, run `./prod/deploy.sh`.
 
 ## References
 
