@@ -5,15 +5,28 @@ import Dom
 import Html.App as App
 import MultiwayTreeZipper
 import UndoList exposing (UndoList)
+import Phoenix.Socket
+import Phoenix.Channel
+import Phoenix.Push
 import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
 import NoteMiner.SerializedTree exposing (SerializedTree)
-import NoteMiner.Model exposing (Model)
+import NoteMiner.Types exposing (Model, Msg(..))
 import NoteMiner.SampleData exposing (sampleTree)
-import NoteMiner.Update exposing (Msg, performBlind)
+import NoteMiner.Update exposing (performBlind)
 import NoteMiner.View exposing (view)
 import NoteMiner.Storage as Storage
 import NoteMiner.Tree exposing (initialZipper)
 import NoteMiner.Maybe exposing (justOrCrash)
+
+
+-- CONSTANTS
+
+
+socketServer : String
+socketServer =
+    --   TODO Do not hardcode URL.
+    "ws://localhost:4000/socket/websocket"
+
 
 
 -- MAIN
@@ -25,7 +38,7 @@ main =
         { init = init
         , view = view
         , update = Storage.update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -60,6 +73,15 @@ init serializedTree =
           , isCtrlDown = False
           , isShiftDown = False
           , searchText = ""
+          , phxSocket =
+                Phoenix.Socket.init socketServer
+                    |> Phoenix.Socket.withDebug
+                    |> Phoenix.Socket.on "new:msg" "rooms:lobby" ReceiveChatMessage
           }
         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
         )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Phoenix.Socket.listen model.phxSocket PhoenixMsg

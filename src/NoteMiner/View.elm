@@ -14,8 +14,7 @@ import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
 import NoteMiner.Keyboard exposing (..)
 import NoteMiner.Maybe exposing (justOrCrash)
 import NoteMiner.Tree exposing (..)
-import NoteMiner.Model exposing (Model, getSelectedNodeZipper)
-import NoteMiner.Update exposing (Msg(..))
+import NoteMiner.Types exposing (Model, Msg(..), getSelectedNodeZipper)
 
 
 view : Model -> Html Msg

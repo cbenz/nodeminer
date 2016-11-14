@@ -3,8 +3,8 @@ port module NoteMiner.Storage exposing (..)
 import Json.Encode as Encode
 import Json.Decode as Decode exposing ((:=))
 import MultiwayTree
-import NoteMiner.Model exposing (Model)
-import NoteMiner.Update as Update exposing (Msg)
+import NoteMiner.Types exposing (Model, Msg)
+import NoteMiner.Update as Update
 import NoteMiner.Tree exposing (Datum, Tree, node)
 import NoteMiner.SerializedTree exposing (SerializedTree)
 

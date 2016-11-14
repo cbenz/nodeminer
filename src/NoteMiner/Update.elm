@@ -5,32 +5,13 @@ import Dom
 import Task exposing (Task)
 import UndoList
 import MultiwayTreeZipper
-import NoteMiner.Keyboard exposing (ModifierKey(..))
+import Phoenix.Socket
 import NoteMiner.Tree exposing (..)
 import NoteMiner.SampleData
-import NoteMiner.Model exposing (Model, getSelectedNodeZipper)
+import NoteMiner.Types exposing (getSelectedNodeZipper, Model, Msg(..))
 import NoteMiner.Maybe exposing (justOrCrash)
 import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
-
-
-type Msg
-    = NoOp
-    | ChangeModifierKey ModifierKey Bool
-    | Undo
-    | Redo
-    | ResetToSampleTree
-    | SelectNode NodeId
-    | SetText String
-    | SelectPreviousNode
-    | SelectNextNode
-    | InsertNodeBelow
-    | RemoveCurrentNode
-    | RemoveCurrentNodeFromBackspace
-    | IndentCurrentNode
-    | DedentCurrentNode
-    | MoveCurrentNodeUp
-    | MoveCurrentNodeDown
-    | SetSearchText String
+import NoteMiner.Keyboard exposing (ModifierKey(..))
 
 
 performBlind : Task a b -> Cmd Msg
@@ -355,3 +336,22 @@ update msg model =
 
             SetSearchText text ->
                 ( { model | searchText = text }, Cmd.none )
+
+            PhoenixMsg msg ->
+                let
+                    ( phxSocket, phxCmd ) =
+                        Phoenix.Socket.update msg model.phxSocket
+                in
+                    ( { model | phxSocket = phxSocket }
+                    , Cmd.map PhoenixMsg phxCmd
+                    )
+
+            ReceiveChatMessage raw ->
+                case JD.decodeValue chatMessageDecoder raw of
+                    Ok chatMessage ->
+                        ( { model | messages = (chatMessage.user ++ ": " ++ chatMessage.body) :: model.messages }
+                        , Cmd.none
+                        )
+
+                    Err error ->
+                        ( model, Cmd.none )
