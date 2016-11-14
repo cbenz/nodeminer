@@ -33,11 +33,7 @@ view model =
             ]
         , hr [] []
         , button [ onClick ResetToSampleTree ] [ text "Reset to sample tree" ]
-        , p []
-            [ "The tree is stored and synchronized in localStorage\n            . "
-                ++ "Look at the JavaScript console for error messages."
-                |> text
-            ]
+        , p [] [ text "The tree is stored and synchronized in localStorage. Look at the JavaScript console for error messages." ]
         ]
 
 
