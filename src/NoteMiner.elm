@@ -7,14 +7,14 @@ import Json.Decode as Decode
 import MultiwayTreeZipper
 import UndoList exposing (UndoList)
 import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
-import NoteMiner.SerializedTree exposing (SerializedTree)
 import NoteMiner.Model exposing (Model)
 import NoteMiner.SampleData exposing (sampleTree)
-import NoteMiner.Update exposing (Msg, attemptBlind)
+import NoteMiner.Update exposing (Msg(..))
 import NoteMiner.View exposing (view)
 import NoteMiner.Storage as Storage
 import NoteMiner.Tree exposing (initialZipper)
 import NoteMiner.Maybe exposing (justOrCrash)
+import Task
 
 
 -- MAIN
@@ -64,7 +64,7 @@ init serializedTree =
                   , isShiftDown = False
                   , searchText = ""
                   }
-                , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                , Task.attempt (\_ -> NoteMiner.Update.NoOp) (Dom.focus selectedNodeIdHtmlAttribute)
                 )
 
         Err err ->

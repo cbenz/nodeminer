@@ -33,11 +33,6 @@ type Msg
     | SetSearchText String
 
 
-attemptBlind : Task a b -> Cmd Msg
-attemptBlind =
-    Task.attempt (always NoOp)
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -46,6 +41,9 @@ update msg model =
 
         selectedNodeZipper =
             getSelectedNodeZipper model
+
+        focusCmd =
+            Task.attempt (\_ -> NoOp) (Dom.focus selectedNodeIdHtmlAttribute)
     in
         case msg of
             NoOp ->
@@ -64,7 +62,7 @@ update msg model =
 
             SelectNode nodeId ->
                 ( { model | selectedNodeId = nodeId }
-                , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                , focusCmd
                 )
 
             SetText text ->
@@ -99,7 +97,7 @@ update msg model =
                             |> .id
                 in
                     ( { model | selectedNodeId = selectedNodeId_ }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             SelectNextNode ->
@@ -115,7 +113,7 @@ update msg model =
                             |> .id
                 in
                     ( { model | selectedNodeId = selectedNodeId_ }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             InsertNodeBelow ->
@@ -152,7 +150,7 @@ update msg model =
                         | treeUndoList = treeUndoList_
                         , selectedNodeId = selectedNodeId_
                       }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             IndentCurrentNode ->
@@ -172,7 +170,7 @@ update msg model =
                                     |> \tree -> UndoList.new tree model.treeUndoList
                         in
                             ( { model | treeUndoList = treeUndoList_ }
-                            , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                            , focusCmd
                             )
                     else
                         -- To be indented the node must have at least a previous sibling.
@@ -190,7 +188,7 @@ update msg model =
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
                         ( { model | treeUndoList = treeUndoList_ }
-                        , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        , focusCmd
                         )
                 else
                     -- To be dedented the node must have a depth > 1.
@@ -214,7 +212,7 @@ update msg model =
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
                         ( { model | treeUndoList = treeUndoList_ }
-                        , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        , focusCmd
                         )
                 else
                     ( model, Cmd.none )
@@ -237,7 +235,7 @@ update msg model =
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
                         ( { model | treeUndoList = treeUndoList_ }
-                        , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        , focusCmd
                         )
                 else
                     ( model, Cmd.none )
@@ -279,7 +277,7 @@ update msg model =
                             | treeUndoList = treeUndoList_
                             , selectedNodeId = selectedNodeId_
                           }
-                        , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        , focusCmd
                         )
                 else
                     ( model, Cmd.none )
@@ -318,7 +316,7 @@ update msg model =
                             | treeUndoList = treeUndoList_
                             , selectedNodeId = selectedNodeId_
                           }
-                        , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                        , focusCmd
                         )
                 else
                     ( model, Cmd.none )
@@ -332,7 +330,7 @@ update msg model =
                             |> \tree -> UndoList.fresh tree
                 in
                     ( { model | treeUndoList = treeUndoList_ }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             Undo ->
@@ -341,7 +339,7 @@ update msg model =
                         UndoList.undo model.treeUndoList
                 in
                     ( { model | treeUndoList = treeUndoList_ }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             Redo ->
@@ -350,7 +348,7 @@ update msg model =
                         UndoList.redo model.treeUndoList
                 in
                     ( { model | treeUndoList = treeUndoList_ }
-                    , attemptBlind (Dom.focus selectedNodeIdHtmlAttribute)
+                    , focusCmd
                     )
 
             SetSearchText text ->
