@@ -1,7 +1,7 @@
 port module NoteMiner.Storage exposing (..)
 
 import Json.Encode as Encode
-import Json.Decode as Decode exposing ((:=))
+import Json.Decode as Decode
 import MultiwayTree
 import NoteMiner.Model exposing (Model)
 import NoteMiner.Update as Update exposing (Msg)
@@ -77,22 +77,15 @@ unserialize str =
 
 decodeTreeNode : Decode.Decoder DatumPair
 decodeTreeNode =
-    Decode.object2
+    Decode.map2
         DatumPair
-        ("datum" := decodeDatum)
-        ("children" := lazy (\_ -> Decode.list decodeTreeNode))
+        (Decode.field "datum" decodeDatum)
+        (Decode.field "children" (Decode.lazy (\_ -> Decode.list decodeTreeNode)))
 
 
 decodeDatum : Decode.Decoder Datum
 decodeDatum =
-    Decode.object2
+    Decode.map2
         Datum
-        ("text" := Decode.string)
-        ("id" := Decode.int)
-
-
-lazy : (() -> Decode.Decoder a) -> Decode.Decoder a
-lazy thunk =
-    Decode.customDecoder
-        Decode.value
-        (\rawValue -> Decode.decodeValue (thunk ()) rawValue)
+        (Decode.field "text" Decode.string)
+        (Decode.field "id" Decode.int)

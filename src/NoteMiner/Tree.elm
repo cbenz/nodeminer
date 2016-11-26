@@ -130,7 +130,8 @@ findIndexInForest zipper forest =
                     else
                         Nothing
                 )
-            |> Maybe.oneOf
+            |> List.filterMap identity
+            |> List.head
             |> justOrCrash "findIndexInForest"
 
 

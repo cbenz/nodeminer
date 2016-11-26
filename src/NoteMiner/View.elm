@@ -80,18 +80,19 @@ viewSelectedTreeNode model datum =
             eventOptions =
                 { preventDefault = True, stopPropagation = False }
 
-            filterKey keyCode =
-                if
-                    List.member keyCode [ enter, up, down, tab, ctrl, alt, shift ]
-                        || (model.isCtrlDown && Char.fromCode keyCode == 'Z')
-                        || (keyCode == backspace && String.isEmpty datum.text)
-                then
-                    Ok keyCode
-                else
-                    Err "Will be handled by input event"
-
             decoder =
-                Decode.customDecoder Html.Events.keyCode filterKey
+                Html.Events.keyCode
+                    |> Decode.andThen
+                        (\keyCode ->
+                            if
+                                List.member keyCode [ enter, up, down, tab, ctrl, alt, shift ]
+                                    || (model.isCtrlDown && Char.fromCode keyCode == 'Z')
+                                    || (keyCode == backspace && String.isEmpty datum.text)
+                            then
+                                Decode.succeed keyCode
+                            else
+                                Decode.fail "Will be handled by input event"
+                        )
                     |> Decode.map
                         (\keyCode ->
                             if keyCode == backspace then
