@@ -69,26 +69,26 @@ update msg model =
 
             SetText text ->
                 let
-                    tree' =
+                    tree_ =
                         MultiwayTreeZipper.updateDatum
                             (\datum -> { datum | text = text })
                             selectedNodeZipper
                             |> justOrCrash "SetText"
                             |> getTreeRootFromZipper
 
-                    treeUndoList' =
+                    treeUndoList_ =
                         if String.endsWith " " text then
-                            UndoList.new tree' model.treeUndoList
+                            UndoList.new tree_ model.treeUndoList
                         else
-                            UndoList.mapPresent (always tree') model.treeUndoList
+                            UndoList.mapPresent (always tree_) model.treeUndoList
                 in
-                    ( { model | treeUndoList = treeUndoList' }
+                    ( { model | treeUndoList = treeUndoList_ }
                     , Cmd.none
                     )
 
             SelectPreviousNode ->
                 let
-                    selectedNodeId' =
+                    selectedNodeId_ =
                         (if canGoToPrevious selectedNodeZipper then
                             MultiwayTreeZipper.goToPrevious selectedNodeZipper
                                 |> justOrCrash "updateSelectPreviousNode"
@@ -98,13 +98,13 @@ update msg model =
                             |> MultiwayTreeZipper.datum
                             |> .id
                 in
-                    ( { model | selectedNodeId = selectedNodeId' }
+                    ( { model | selectedNodeId = selectedNodeId_ }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
 
             SelectNextNode ->
                 let
-                    selectedNodeId' =
+                    selectedNodeId_ =
                         (if canGoToNext selectedNodeZipper then
                             MultiwayTreeZipper.goToNext selectedNodeZipper
                                 |> justOrCrash "updateSelectNextNode"
@@ -114,7 +114,7 @@ update msg model =
                             |> MultiwayTreeZipper.datum
                             |> .id
                 in
-                    ( { model | selectedNodeId = selectedNodeId' }
+                    ( { model | selectedNodeId = selectedNodeId_ }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
 
@@ -123,22 +123,22 @@ update msg model =
                     newNode =
                         nextNode tree
 
-                    selectedNodeZipper' =
+                    selectedNodeZipper_ =
                         if hasChildren selectedNodeZipper then
                             MultiwayTreeZipper.insertChild newNode selectedNodeZipper
                         else
                             insertSiblingBelow newNode selectedNodeZipper
 
-                    treeUndoList' =
-                        selectedNodeZipper'
-                            `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                    treeUndoList_ =
+                        selectedNodeZipper_
+                            |> Maybe.andThen MultiwayTreeZipper.goToRoot
                             |> justOrCrash "updateInsertNodeBelow: treeUndoList'"
-                            |> fst
+                            |> Tuple.first
                             |> \tree -> UndoList.new tree model.treeUndoList
 
-                    selectedNodeId' =
-                        selectedNodeZipper'
-                            `Maybe.andThen`
+                    selectedNodeId_ =
+                        selectedNodeZipper_
+                            |> Maybe.andThen
                                 (if hasChildren selectedNodeZipper then
                                     MultiwayTreeZipper.goToChild 0
                                  else
@@ -149,8 +149,8 @@ update msg model =
                             |> .id
                 in
                     ( { model
-                        | treeUndoList = treeUndoList'
-                        , selectedNodeId = selectedNodeId'
+                        | treeUndoList = treeUndoList_
+                        , selectedNodeId = selectedNodeId_
                       }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
@@ -162,16 +162,16 @@ update msg model =
                 in
                     if canIndent selectedNodeZipper then
                         let
-                            treeUndoList' =
+                            treeUndoList_ =
                                 removeCurrentAndGoUp selectedNodeZipper
-                                    `Maybe.andThen` MultiwayTreeZipper.goToChild (index - 1)
-                                    `Maybe.andThen` MultiwayTreeZipper.appendChild (fst selectedNodeZipper)
-                                    `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                    |> Maybe.andThen (MultiwayTreeZipper.goToChild (index - 1))
+                                    |> Maybe.andThen (MultiwayTreeZipper.appendChild (Tuple.first selectedNodeZipper))
+                                    |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                     |> justOrCrash "updateIndentCurrentNode"
-                                    |> fst
+                                    |> Tuple.first
                                     |> \tree -> UndoList.new tree model.treeUndoList
                         in
-                            ( { model | treeUndoList = treeUndoList' }
+                            ( { model | treeUndoList = treeUndoList_ }
                             , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                             )
                     else
@@ -181,15 +181,15 @@ update msg model =
             DedentCurrentNode ->
                 if canDedent selectedNodeZipper then
                     let
-                        treeUndoList' =
+                        treeUndoList_ =
                             removeCurrentAndGoUp selectedNodeZipper
-                                `Maybe.andThen` insertSiblingBelow (fst selectedNodeZipper)
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> Maybe.andThen (insertSiblingBelow (Tuple.first selectedNodeZipper))
+                                |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                 |> justOrCrash "updateDedentCurrentNode"
-                                |> fst
+                                |> Tuple.first
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
-                        ( { model | treeUndoList = treeUndoList' }
+                        ( { model | treeUndoList = treeUndoList_ }
                         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                         )
                 else
@@ -202,18 +202,18 @@ update msg model =
                         index =
                             findIndexInSiblings selectedNodeZipper
 
-                        index' =
+                        index_ =
                             index - 1
 
-                        treeUndoList' =
+                        treeUndoList_ =
                             removeCurrentAndGoUp selectedNodeZipper
-                                `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> Maybe.andThen (insertChildAtIndex (Tuple.first selectedNodeZipper) index_)
+                                |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                 |> justOrCrash "updateMoveCurrentNodeUp"
-                                |> fst
+                                |> Tuple.first
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
-                        ( { model | treeUndoList = treeUndoList' }
+                        ( { model | treeUndoList = treeUndoList_ }
                         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                         )
                 else
@@ -225,18 +225,18 @@ update msg model =
                         index =
                             findIndexInSiblings selectedNodeZipper
 
-                        index' =
+                        index_ =
                             index + 1
 
-                        treeUndoList' =
+                        treeUndoList_ =
                             removeCurrentAndGoUp selectedNodeZipper
-                                `Maybe.andThen` insertChildAtIndex (fst selectedNodeZipper) index'
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                                |> Maybe.andThen (insertChildAtIndex (Tuple.first selectedNodeZipper) index_)
+                                |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                 |> justOrCrash "updateMoveCurrentNodeDown"
-                                |> fst
+                                |> Tuple.first
                                 |> \tree -> UndoList.new tree model.treeUndoList
                     in
-                        ( { model | treeUndoList = treeUndoList' }
+                        ( { model | treeUndoList = treeUndoList_ }
                         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                         )
                 else
@@ -245,19 +245,19 @@ update msg model =
             RemoveCurrentNode ->
                 if canRemove selectedNodeZipper then
                     let
-                        selectedNodeZipper' =
+                        selectedNodeZipper_ =
                             removeCurrentAndGoUp selectedNodeZipper
 
-                        treeUndoList' =
-                            selectedNodeZipper'
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                        treeUndoList_ =
+                            selectedNodeZipper_
+                                |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                 |> justOrCrash "updateRemoveCurrentNode: treeUndoList'"
-                                |> fst
+                                |> Tuple.first
                                 |> \tree -> UndoList.new tree model.treeUndoList
 
-                        selectedNodeId' =
-                            selectedNodeZipper'
-                                `Maybe.andThen`
+                        selectedNodeId_ =
+                            selectedNodeZipper_
+                                |> Maybe.andThen
                                     (\parent ->
                                         if hasChildren parent then
                                             if isLastSibling selectedNodeZipper then
@@ -276,8 +276,8 @@ update msg model =
                                 |> .id
                     in
                         ( { model
-                            | treeUndoList = treeUndoList'
-                            , selectedNodeId = selectedNodeId'
+                            | treeUndoList = treeUndoList_
+                            , selectedNodeId = selectedNodeId_
                           }
                         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                         )
@@ -287,19 +287,19 @@ update msg model =
             RemoveCurrentNodeFromBackspace ->
                 if canRemove selectedNodeZipper then
                     let
-                        selectedNodeZipper' =
+                        selectedNodeZipper_ =
                             removeCurrentAndGoUp selectedNodeZipper
 
-                        treeUndoList' =
-                            selectedNodeZipper'
-                                `Maybe.andThen` MultiwayTreeZipper.goToRoot
+                        treeUndoList_ =
+                            selectedNodeZipper_
+                                |> Maybe.andThen MultiwayTreeZipper.goToRoot
                                 |> justOrCrash "updateRemoveCurrentNode: treeUndoList'"
-                                |> fst
+                                |> Tuple.first
                                 |> \tree -> UndoList.new tree model.treeUndoList
 
-                        selectedNodeId' =
-                            selectedNodeZipper'
-                                `Maybe.andThen`
+                        selectedNodeId_ =
+                            selectedNodeZipper_
+                                |> Maybe.andThen
                                     (\parent ->
                                         if hasChildren parent then
                                             let
@@ -315,8 +315,8 @@ update msg model =
                                 |> .id
                     in
                         ( { model
-                            | treeUndoList = treeUndoList'
-                            , selectedNodeId = selectedNodeId'
+                            | treeUndoList = treeUndoList_
+                            , selectedNodeId = selectedNodeId_
                           }
                         , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                         )
@@ -325,31 +325,31 @@ update msg model =
 
             ResetToSampleTree ->
                 let
-                    treeUndoList' =
+                    treeUndoList_ =
                         MultiwayTreeZipper.goToChild 0 (initialZipper NoteMiner.SampleData.sampleTree)
                             |> justOrCrash "ResetToSampleTree"
                             |> getTreeRootFromZipper
                             |> \tree -> UndoList.fresh tree
                 in
-                    ( { model | treeUndoList = treeUndoList' }
+                    ( { model | treeUndoList = treeUndoList_ }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
 
             Undo ->
                 let
-                    treeUndoList' =
+                    treeUndoList_ =
                         UndoList.undo model.treeUndoList
                 in
-                    ( { model | treeUndoList = treeUndoList' }
+                    ( { model | treeUndoList = treeUndoList_ }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
 
             Redo ->
                 let
-                    treeUndoList' =
+                    treeUndoList_ =
                         UndoList.redo model.treeUndoList
                 in
-                    ( { model | treeUndoList = treeUndoList' }
+                    ( { model | treeUndoList = treeUndoList_ }
                     , performBlind (Dom.focus selectedNodeIdHtmlAttribute)
                     )
 

@@ -62,7 +62,7 @@ hasSameDatumThan a b =
 
 getText : Zipper -> String
 getText =
-    fst >> MultiwayTree.datum >> .text
+    Tuple.first >> MultiwayTree.datum >> .text
 
 
 isTextEmpty : Zipper -> Bool
@@ -80,7 +80,7 @@ isFirstVisibleNode zipper =
     let
         firstVisibleNode =
             MultiwayTreeZipper.goToRoot zipper
-                `Maybe.andThen` (MultiwayTreeZipper.goToChild 0)
+                |> Maybe.andThen (MultiwayTreeZipper.goToChild 0)
                 |> justOrCrash "isFirstVisibleNode"
     in
         zipper == firstVisibleNode
@@ -96,14 +96,14 @@ isFirstLevelNode zipper =
 
 hasChildren : MultiwayTreeZipper.Zipper a -> Bool
 hasChildren zipper =
-    zipper |> fst |> MultiwayTree.children |> not << List.isEmpty
+    zipper |> Tuple.first |> MultiwayTree.children |> not << List.isEmpty
 
 
 getTreeRootFromZipper : MultiwayTreeZipper.Zipper a -> MultiwayTree.Tree a
 getTreeRootFromZipper zipper =
     MultiwayTreeZipper.goToRoot zipper
         |> justOrCrash "getTreeRootFromZipper"
-        |> fst
+        |> Tuple.first
 
 
 getSiblings : MultiwayTreeZipper.Zipper a -> MultiwayTree.Forest a
@@ -113,19 +113,19 @@ getSiblings zipper =
             MultiwayTreeZipper.goUp zipper
                 |> justOrCrash "getSiblings"
     in
-        MultiwayTree.children (fst parent)
+        MultiwayTree.children (Tuple.first parent)
 
 
 findIndexInForest : MultiwayTreeZipper.Zipper a -> MultiwayTree.Forest a -> Int
 findIndexInForest zipper forest =
     let
         node =
-            fst zipper
+            Tuple.first zipper
     in
         forest
             |> List.indexedMap
                 (\index sibling ->
-                    if sibling `hasSameDatumThan` node then
+                    if hasSameDatumThan sibling node then
                         Just index
                     else
                         Nothing
@@ -223,12 +223,12 @@ insertChildAtIndex : MultiwayTree.Tree a -> Int -> MultiwayTreeZipper.Zipper a -
 insertChildAtIndex newTree index zipper =
     let
         children =
-            MultiwayTree.children (fst zipper)
+            MultiwayTree.children (Tuple.first zipper)
 
-        children' =
+        children_ =
             insertAtIndex newTree index children
     in
-        MultiwayTreeZipper.updateChildren children' zipper
+        MultiwayTreeZipper.updateChildren children_ zipper
 
 
 {-| Inserts a `Tree` as the sibling of `index` of the `Tree` of the current focus. Does not move the focus.
@@ -236,10 +236,10 @@ insertChildAtIndex newTree index zipper =
 insertSiblingAtIndex : MultiwayTree.Tree a -> Int -> MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
 insertSiblingAtIndex newTree index zipper =
     MultiwayTreeZipper.goUp zipper
-        `Maybe.andThen` insertChildAtIndex newTree index
-        `Maybe.andThen`
+        |> Maybe.andThen (insertChildAtIndex newTree index)
+        |> Maybe.andThen
             -- Restore focus moved by `goUp` to its original position.
-            MultiwayTreeZipper.goToChild (index - 1)
+            (MultiwayTreeZipper.goToChild (index - 1))
 
 
 {-| Removes the `Tree` at the current focus. Moves the focus to the parent.
@@ -253,11 +253,11 @@ removeCurrentAndGoUp zipper =
         siblings =
             getSiblings zipper
 
-        children' =
+        children_ =
             removeAtIndex index siblings
     in
         MultiwayTreeZipper.goUp zipper
-            `Maybe.andThen` MultiwayTreeZipper.updateChildren children'
+            |> Maybe.andThen (MultiwayTreeZipper.updateChildren children_)
 
 
 goToNextSibling : MultiwayTreeZipper.Zipper a -> Maybe (MultiwayTreeZipper.Zipper a)
@@ -267,4 +267,4 @@ goToNextSibling zipper =
             findIndexInSiblings zipper
     in
         MultiwayTreeZipper.goUp zipper
-            `Maybe.andThen` MultiwayTreeZipper.goToChild (index + 1)
+            |> Maybe.andThen (MultiwayTreeZipper.goToChild (index + 1))

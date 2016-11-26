@@ -5,7 +5,7 @@ import String
 import Json.Decode as Decode
 import Regex exposing (Regex)
 import Html exposing (..)
-import Html.Attributes exposing (disabled, href, id, placeholder, rel, style, target, title, type', value)
+import Html.Attributes exposing (disabled, href, id, placeholder, rel, style, target, title, type_, value)
 import Html.Events exposing (on, onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
@@ -48,7 +48,7 @@ viewTreeNode : Model -> Zipper -> List (Html Msg)
 viewTreeNode model accuZipper =
     let
         node =
-            fst accuZipper
+            Tuple.first accuZipper
 
         datum =
             MultiwayTree.datum node
@@ -192,17 +192,17 @@ viewTreeNodeChildren : Model -> Zipper -> Html Msg
 viewTreeNodeChildren model accuZipper =
     let
         children =
-            MultiwayTree.children (fst accuZipper)
+            MultiwayTree.children (Tuple.first accuZipper)
     in
         ul []
             (List.indexedMap
                 (\index _ ->
                     let
-                        accuZipper' =
+                        accuZipper_ =
                             MultiwayTreeZipper.goToChild index accuZipper
                                 |> justOrCrash "viewTreeNodeChildren"
                     in
-                        viewTreeNode model accuZipper'
+                        viewTreeNode model accuZipper_
                 )
                 children
                 |> List.concat
@@ -406,6 +406,6 @@ viewSearchInput =
     input
         [ onInput SetSearchText
         , placeholder "Search"
-        , type' "search"
+        , type_ "search"
         ]
         []
