@@ -1,4 +1,4 @@
-module NoteMiner.List exposing (..)
+module List.Custom exposing (..)
 
 {-| Inserts a value in a list so that the value has the given index in the new list.
 

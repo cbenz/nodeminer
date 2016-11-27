@@ -1,36 +1,59 @@
-module NoteMiner.Update exposing (..)
+module State exposing (..)
 
-import String
+import Constants
 import Dom
-import Task exposing (Task)
-import UndoList
+import Json.Decode as Decode
+import Keyboard exposing (ModifierKey(..))
+import Maybe.Custom exposing (justOrCrash)
 import MultiwayTreeZipper
-import NoteMiner.Keyboard exposing (ModifierKey(..))
-import NoteMiner.Tree exposing (..)
-import NoteMiner.SampleData
-import NoteMiner.Model exposing (Model, getSelectedNodeZipper)
-import NoteMiner.Maybe exposing (justOrCrash)
-import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
+import SampleData
+import Storage
+import String
+import Task exposing (Task)
+import Tree exposing (..)
+import Types exposing (..)
+import UndoList
 
 
-type Msg
-    = NoOp
-    | ChangeModifierKey ModifierKey Bool
-    | Undo
-    | Redo
-    | ResetToSampleTree
-    | SelectNode NodeId
-    | SetText String
-    | SelectPreviousNode
-    | SelectNextNode
-    | InsertNodeBelow
-    | RemoveCurrentNode
-    | RemoveCurrentNodeFromBackspace
-    | IndentCurrentNode
-    | DedentCurrentNode
-    | MoveCurrentNodeUp
-    | MoveCurrentNodeDown
-    | SetSearchText String
+init : Decode.Value -> ( Model, Cmd Msg )
+init serializedTree =
+    case Decode.decodeValue (Decode.maybe Decode.string) serializedTree of
+        Ok serializedTree ->
+            let
+                tree =
+                    case serializedTree of
+                        Just tree ->
+                            (case Storage.unserialize tree of
+                                Ok tree ->
+                                    tree
+
+                                Err msg ->
+                                    Debug.log
+                                        ("Error loading tree in localStorage: " ++ msg ++ ", fallback to sample tree")
+                                        SampleData.sampleTree
+                            )
+
+                        Nothing ->
+                            Debug.log
+                                "No tree found in localStorage, fallback to sample tree"
+                                SampleData.sampleTree
+
+                firstChildZipper =
+                    MultiwayTreeZipper.goToChild 0 (initialZipper tree)
+                        |> justOrCrash "init"
+            in
+                ( { treeUndoList = UndoList.fresh tree
+                  , selectedNodeId = (MultiwayTreeZipper.datum firstChildZipper).id
+                  , isAltDown = False
+                  , isCtrlDown = False
+                  , isShiftDown = False
+                  , searchText = ""
+                  }
+                , Task.attempt (\_ -> NoOp) (Dom.focus Constants.selectedNodeIdHtmlAttribute)
+                )
+
+        Err err ->
+            Debug.crash err
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -43,7 +66,7 @@ update msg model =
             getSelectedNodeZipper model
 
         focusCmd =
-            Task.attempt (\_ -> NoOp) (Dom.focus selectedNodeIdHtmlAttribute)
+            Task.attempt (\_ -> NoOp) (Dom.focus Constants.selectedNodeIdHtmlAttribute)
     in
         case msg of
             NoOp ->
@@ -324,7 +347,7 @@ update msg model =
             ResetToSampleTree ->
                 let
                     treeUndoList_ =
-                        MultiwayTreeZipper.goToChild 0 (initialZipper NoteMiner.SampleData.sampleTree)
+                        MultiwayTreeZipper.goToChild 0 (initialZipper SampleData.sampleTree)
                             |> justOrCrash "ResetToSampleTree"
                             |> getTreeRootFromZipper
                             |> \tree -> UndoList.fresh tree

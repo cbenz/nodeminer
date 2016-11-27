@@ -1,12 +1,10 @@
-port module NoteMiner.Storage exposing (..)
+port module Storage exposing (..)
 
-import Json.Encode as Encode
 import Json.Decode as Decode
+import Json.Encode as Encode
 import MultiwayTree
-import NoteMiner.Model exposing (Model)
-import NoteMiner.Update as Update exposing (Msg)
-import NoteMiner.Tree exposing (Datum, Tree, node)
-import NoteMiner.SerializedTree exposing (SerializedTree)
+import Tree exposing (Datum, Tree, node)
+import Types exposing (..)
 
 
 -- PORT
@@ -19,11 +17,11 @@ port setStorage : SerializedTree -> Cmd msg
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : (Msg -> Model -> ( Model, Cmd Msg )) -> Msg -> Model -> ( Model, Cmd Msg )
+update updateFunc msg model =
     let
         ( newModel, cmds ) =
-            Update.update msg model
+            updateFunc msg model
 
         tree =
             newModel.treeUndoList.present

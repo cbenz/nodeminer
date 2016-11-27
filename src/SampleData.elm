@@ -1,6 +1,6 @@
-module NoteMiner.SampleData exposing (..)
+module SampleData exposing (..)
 
-import NoteMiner.Tree exposing (node, Tree)
+import Tree exposing (node, Tree)
 
 
 sampleTree : Tree

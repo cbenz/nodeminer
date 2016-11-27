@@ -1,10 +1,10 @@
-module NoteMiner.Tree exposing (..)
+module Tree exposing (..)
 
+import List.Custom exposing (insertAtIndex, removeAtIndex)
+import Maybe.Custom exposing (justOrCrash)
 import MultiwayTree
 import MultiwayTreeZipper
 import String
-import NoteMiner.Maybe exposing (justOrCrash)
-import NoteMiner.List exposing (insertAtIndex, removeAtIndex)
 
 
 type alias NodeId =

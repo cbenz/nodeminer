@@ -1,6 +1,7 @@
-module NoteMiner.View exposing (..)
+module Views exposing (..)
 
 import Char
+import Constants
 import String
 import Json.Decode as Decode
 import Regex exposing (Regex)
@@ -10,16 +11,14 @@ import Html.Events exposing (on, onClick, onInput, onWithOptions)
 import MultiwayTree
 import MultiwayTreeZipper
 import UndoList
-import NoteMiner.Constants exposing (selectedNodeIdHtmlAttribute)
-import NoteMiner.Keyboard exposing (..)
-import NoteMiner.Maybe exposing (justOrCrash)
-import NoteMiner.Tree exposing (..)
-import NoteMiner.Model exposing (Model, getSelectedNodeZipper)
-import NoteMiner.Update exposing (Msg(..))
+import Keyboard exposing (..)
+import Maybe.Custom exposing (justOrCrash)
+import Tree exposing (..)
+import Types exposing (..)
 
 
-view : Model -> Html Msg
-view model =
+root : Model -> Html Msg
+root model =
     div []
         [ h1 [] [ text "NoteMiner" ]
         , p [] (viewToolbarItems model ++ [ separatorSpan, viewSearchInput ])
@@ -74,7 +73,7 @@ viewTreeNode model accuZipper =
 viewSelectedTreeNode : Model -> Datum -> Html Msg
 viewSelectedTreeNode model datum =
     input
-        [ id selectedNodeIdHtmlAttribute
+        [ id Constants.selectedNodeIdHtmlAttribute
         , value datum.text
         , let
             eventOptions =

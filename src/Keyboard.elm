@@ -1,4 +1,4 @@
-module NoteMiner.Keyboard exposing (..)
+module Keyboard exposing (..)
 
 
 type alias KeyCode =

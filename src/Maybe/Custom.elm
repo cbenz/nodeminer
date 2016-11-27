@@ -1,4 +1,4 @@
-module NoteMiner.Maybe exposing (..)
+module Maybe.Custom exposing (..)
 
 
 justOrCrash : String -> Maybe a -> a

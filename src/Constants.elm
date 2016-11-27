@@ -1,4 +1,4 @@
-module NoteMiner.Constants exposing (..)
+module Constants exposing (..)
 
 
 selectedNodeIdHtmlAttribute : String
